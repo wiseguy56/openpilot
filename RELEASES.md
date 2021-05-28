@@ -1,3 +1,11 @@
+Version 0.7.9.1 + VW 1.6 (2021-05-27)
+========================
+ * If you have a Comma Two, time to upgrade! This branch is very old.
+   Check in on Discord #volkswagen-audi, we'll help you migrate.
+   Users with end-of-support hardware (OP3T EONs White or Grey Pandas)
+   should consider an upgrade; this is your last version of openpilot.
+ * Use a community copy of NEOS 14
+
 Version 0.7.9 + VW 1.6 (2020-10-18)
 ========================
  * (VW Community) Restore AVRT and de-deprecate White Panda (experimental)
