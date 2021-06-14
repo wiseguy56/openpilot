@@ -1,5 +1,7 @@
+from collections import deque
 from cereal import log
 from common.numpy_fast import clip, interp
+from common.realtime import DT_MDL
 from selfdrive.controls.lib.pid import PIController
 from selfdrive.controls.lib.drive_helpers import CONTROL_N
 from selfdrive.modeld.constants import T_IDXS
@@ -63,11 +65,13 @@ class LongControl():
                             convert=compute_gb)
     self.v_pid = 0.0
     self.last_output_gb = 0.0
+    self.a_window = deque(maxlen=int(1/DT_MDL)) # 1 second window
 
   def reset(self, v_pid):
     """Reset PID controller and change setpoint"""
     self.pid.reset()
     self.v_pid = v_pid
+    self.a_window.clear()
 
   def update(self, active, CS, CP, long_plan):
     """Update longitudinal control. This updates the state machine and runs a PID loop"""
@@ -76,11 +80,16 @@ class LongControl():
     if len(long_plan.speeds) == CONTROL_N:
       v_target = interp(DEFAULT_LONG_LAG, T_IDXS[:CONTROL_N], long_plan.speeds)
       v_target_future = long_plan.speeds[-1]
-      a_target = interp(DEFAULT_LONG_LAG, T_IDXS[:CONTROL_N], long_plan.accels)
+      #a_target = interp(DEFAULT_LONG_LAG, T_IDXS[:CONTROL_N], long_plan.accels)
+      # TODO: hack to feed forward min future accel
+      # T_IDXS[:CONTROL_N] = [0., 0.00976562, 0.0390625, 0.08789062, 0.15625, 0.24414062, 0.3515625, 0.47851562, 0.625, 0.79101562, 0.9765625, 1.18164062, 1.40625, 1.65039062, 1.9140625, 2.19726562, 2.5]
+      self.a_window.append(min(long_plan.accels[:11]))
+      a_target = min(self.a_window)
     else:
       v_target = 0.0
       v_target_future = 0.0
       a_target = 0.0
+      self.a_window.clear()
 
 
     # Actuation limits

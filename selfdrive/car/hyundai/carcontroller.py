@@ -95,7 +95,7 @@ class CarController():
       # rouding prevents alternating between very small positive and negative value when stopped
       accel = round(actuators.gas - actuators.brake, 2)
       # TODO: use LongCtrlState.stopping state instead of accel <= 0
-      stop_req = accel <= 0. and CS.out.vEgo < 0.278
+      stop_req = accel <= 0. and CS.out.vEgo < 0.1
       apply_accel = interp(accel, self.p.ACCEL_LOOKUP_BP, self.p.ACCEL_LOOKUP_V)
       set_speed_in_units = set_speed * (CV.MS_TO_MPH if CS.clu11["CF_Clu_SPEED_UNIT"] == 1 else CV.MS_TO_KPH)
       can_sends.extend(create_acc_commands(self.packer, enabled, apply_accel, int(frame / 2), lead_visible, set_speed_in_units, stop_req))

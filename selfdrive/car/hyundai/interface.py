@@ -46,10 +46,10 @@ class CarInterface(CarInterfaceBase):
     ret.brakeMaxBP = [0.] # m/s
     ret.brakeMaxV = [1.] # max brake allowed
 
-    ret.longitudinalTuning.kpBP = [0., 35.]
-    ret.longitudinalTuning.kpV = [1., 0.5]
-    ret.longitudinalTuning.kiBP = [0., 35.]
-    ret.longitudinalTuning.kiV = [0.13, 0.07]
+    ret.longitudinalTuning.kpBP = [0.]
+    ret.longitudinalTuning.kpV = [0.5]
+    ret.longitudinalTuning.kiBP = [0.]
+    ret.longitudinalTuning.kiV = [0.1]
 
     if candidate == CAR.SANTA_FE:
       ret.lateralTuning.pid.kf = 0.00005
