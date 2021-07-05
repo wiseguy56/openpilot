@@ -84,7 +84,7 @@ class LongControl():
       #a_target = interp(DEFAULT_LONG_LAG, T_IDXS[:CONTROL_N], long_plan.accels)
       # TODO: hack to feed forward min future accel
       # T_IDXS[:CONTROL_N] = [0., 0.00976562, 0.0390625, 0.08789062, 0.15625, 0.24414062, 0.3515625, 0.47851562, 0.625, 0.79101562, 0.9765625, 1.18164062, 1.40625, 1.65039062, 1.9140625, 2.19726562, 2.5]
-      self.a_window.append(min(long_plan.accels[:11]))
+      self.a_window.append(min(list(long_plan.accels)[:11]))
       a_target = min(self.a_window)
     else:
       v_target = 0.0
