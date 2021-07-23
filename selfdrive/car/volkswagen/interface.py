@@ -184,17 +184,19 @@ class CarInterface(CarInterfaceBase):
         be.pressed = self.CS.buttonStates[button]
         buttonEvents.append(be)
 
-    events = self.create_common_events(ret, extra_gears=[GearShifter.eco, GearShifter.sport, GearShifter.manumatic])
+    events = self.create_common_events(ret, extra_gears=[GearShifter.eco, GearShifter.sport, GearShifter.manumatic],
+                                       pcm_enable=not self.CS.CP.openpilotLongitudinalControl)
 
     # Vehicle health and operation safety checks
     if self.CS.parkingBrakeSet:
       events.add(EventName.parkBrake)
+    if self.CS.tsk_status in [6, 7]:
+      events.add(EventName.gasUnavailable)
 
     if self.CS.CP.openpilotLongitudinalControl:
       for b in buttonEvents:
         # do enable on falling edge of both accel and decel buttons
-        if b.type in [ButtonType.setCruise, ButtonType.resumeCruise, ButtonType.accelCruise,
-                      ButtonType.decelCruise] and not b.pressed:
+        if b.type in [ButtonType.setCruise, ButtonType.resumeCruise] and not b.pressed:
           events.add(EventName.buttonEnable)
         # do disable on rising edge of cancel
         if b.type == "cancel" and b.pressed:
