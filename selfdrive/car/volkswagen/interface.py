@@ -1,8 +1,11 @@
 from cereal import car
+from common.params import Params
+from panda import Panda
 from selfdrive.car.volkswagen.values import CAR, BUTTON_STATES, CANBUS, NetworkLocation, TransmissionType, GearShifter
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint
 from selfdrive.car.interfaces import CarInterfaceBase
 
+ButtonType = car.CarState.ButtonEvent.Type
 EventName = car.CarEvent.EventName
 
 
@@ -22,7 +25,7 @@ class CarInterface(CarInterfaceBase):
 
   @staticmethod
   def compute_gb(accel, speed):
-    return float(accel) / 4.0
+    return float(accel) / 3.5
 
   @staticmethod
   def get_params(candidate, fingerprint=gen_empty_fingerprint(), car_fw=None):
@@ -35,6 +38,14 @@ class CarInterface(CarInterfaceBase):
       # Set global MQB parameters
       ret.safetyModel = car.CarParams.SafetyModel.volkswagen
       ret.enableBsm = 0x30F in fingerprint[0]
+
+      # Disable the radar and let openpilot control longitudinal
+      # WARNING: THIS DISABLES FACTORY FCW/AEB!
+      # EXTRA WARNING: This branch is not for you. It's broken and unfinished. Go away. Seriously. I'm not joking.
+      if Params().get_bool("VisionRadarToggle") and Params().get("DongleId", encoding='utf-8') == "7aae592fc08e895f":
+        ret.pcmCruise = False
+        ret.openpilotLongitudinalControl = True
+        ret.safetyParam = Panda.FLAG_VOLKSWAGEN_LONGITUDINAL
 
       if 0xAD in fingerprint[0]:  # Getriebe_11
         ret.transmissionType = TransmissionType.automatic
@@ -60,6 +71,15 @@ class CarInterface(CarInterfaceBase):
     ret.lateralTuning.pid.kf = 0.00006
     ret.lateralTuning.pid.kpV = [0.6]
     ret.lateralTuning.pid.kiV = [0.2]
+
+    ret.gasMaxBP = [0.]  # m/s
+    ret.gasMaxV = [0.6]  # max gas allowed
+    ret.brakeMaxBP = [0.]  # m/s
+    ret.brakeMaxV = [1.]  # max brake allowed
+    ret.longitudinalTuning.kpBP = [0., 35.]
+    ret.longitudinalTuning.kpV = [1., 0.5]
+    ret.longitudinalTuning.kiBP = [0., 35.]
+    ret.longitudinalTuning.kiV = [0.13, 0.07]
 
     # Per-chassis tuning values, override tuning defaults here if desired
 
@@ -170,6 +190,16 @@ class CarInterface(CarInterfaceBase):
     if self.CS.parkingBrakeSet:
       events.add(EventName.parkBrake)
 
+    if self.CS.CP.openpilotLongitudinalControl:
+      for b in buttonEvents:
+        # do enable on falling edge of both accel and decel buttons
+        if b.type in [ButtonType.setCruise, ButtonType.resumeCruise, ButtonType.accelCruise,
+                      ButtonType.decelCruise] and not b.pressed:
+          events.add(EventName.buttonEnable)
+        # do disable on rising edge of cancel
+        if b.type == "cancel" and b.pressed:
+          events.add(EventName.buttonCancel)
+
     ret.events = events.to_msg()
     ret.buttonEvents = buttonEvents
 
@@ -186,6 +216,8 @@ class CarInterface(CarInterfaceBase):
                    c.hudControl.leftLaneVisible,
                    c.hudControl.rightLaneVisible,
                    c.hudControl.leftLaneDepart,
-                   c.hudControl.rightLaneDepart)
+                   c.hudControl.rightLaneDepart,
+                   c.hudControl.leadVisible,
+                   c.hudControl.setSpeed)
     self.frame += 1
     return can_sends

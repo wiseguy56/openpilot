@@ -99,25 +99,26 @@ class CarState(CarStateBase):
     ret.stockAeb = bool(ext_cp.vl["ACC_10"]["ANB_Teilbremsung_Freigabe"]) or bool(ext_cp.vl["ACC_10"]["ANB_Zielbremsung_Freigabe"])
 
     # Update ACC radar status.
-    accStatus = pt_cp.vl["TSK_06"]["TSK_Status"]
-    if accStatus == 2:
-      # ACC okay and enabled, but not currently engaged
-      ret.cruiseState.available = True
-      ret.cruiseState.enabled = False
-    elif accStatus in [3, 4, 5]:
-      # ACC okay and enabled, currently engaged and regulating speed (3) or engaged with driver accelerating (4) or overrun (5)
-      ret.cruiseState.available = True
-      ret.cruiseState.enabled = True
-    else:
-      # ACC okay but disabled (1), or a radar visibility or other fault/disruption (6 or 7)
-      ret.cruiseState.available = False
-      ret.cruiseState.enabled = False
+    self.tsk_status = pt_cp.vl["TSK_06"]["TSK_Status"]
+    if not self.CP.openpilotLongitudinalControl:
+      if self.tsk_status == 2:
+        # ACC okay and enabled, but not currently engaged
+        ret.cruiseState.available = True
+        ret.cruiseState.enabled = False
+      elif self.tsk_status in [3, 4, 5]:
+        # ACC okay and enabled, currently regulating speed (3) or driver accel override (4) or overrun coast-down (5)
+        ret.cruiseState.available = True
+        ret.cruiseState.enabled = True
+      else:
+        # ACC okay but disabled (1), or a radar visibility or other fault/disruption (6 or 7)
+        ret.cruiseState.available = False
+        ret.cruiseState.enabled = False
 
-    # Update ACC setpoint. When the setpoint is zero or there's an error, the
-    # radar sends a set-speed of ~90.69 m/s / 203mph.
-    ret.cruiseState.speed = ext_cp.vl["ACC_02"]["ACC_Wunschgeschw"] * CV.KPH_TO_MS
-    if ret.cruiseState.speed > 90:
-      ret.cruiseState.speed = 0
+      # Update ACC setpoint. When the setpoint is zero or there's an error, the
+      # radar sends a set-speed of ~90.69 m/s / 203mph.
+      ret.cruiseState.speed = ext_cp.vl["ACC_02"]["ACC_Wunschgeschw"] * CV.KPH_TO_MS
+      if ret.cruiseState.speed > 90:
+        ret.cruiseState.speed = 0
 
     # Update control button states for turn signals and ACC controls.
     self.buttonStates["accelCruise"] = bool(pt_cp.vl["GRA_ACC_01"]["GRA_Tip_Hoch"])
