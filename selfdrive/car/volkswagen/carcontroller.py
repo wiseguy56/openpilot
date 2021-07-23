@@ -34,7 +34,12 @@ class CarController():
     # **** Acceleration and Braking Controls ******************************** #
 
     if CS.CP.openpilotLongitudinalControl:
-      acc_status = 3 if enabled and CS.tsk_status in [2, 3, 4, 5] else CS.tsk_status
+      if CS.tsk_status in [2, 3, 4, 5]:
+        acc_status = 3 if enabled else 2
+      elif CS.tsk_status in [2, 3, 4, 5]:
+        acc_status = 2
+      else:
+        acc_status = CS.tsk_status
 
       apply_accel = round(actuators.gas - actuators.brake, 2)
       apply_accel = clip(apply_accel * ACCEL_SCALE, P.MAX_BRAKE, P.MAX_GAS)
