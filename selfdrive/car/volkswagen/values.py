@@ -5,12 +5,18 @@ from typing import Dict
 
 from cereal import car
 from selfdrive.car import dbc_dict
+
 Ecu = car.CarParams.Ecu
+NetworkLocation = car.CarParams.NetworkLocation
+TransmissionType = car.CarParams.TransmissionType
+GearShifter = car.CarState.GearShifter
 
 class CarControllerParams:
   HCA_STEP = 2                   # HCA_01 message frequency 50Hz
   LDW_STEP = 10                  # LDW_02 message frequency 10Hz
   GRA_ACC_STEP = 3               # GRA_ACC_01 message frequency 33Hz
+  ACC_CONTROL_STEP = 2           # ACC_06 message frequency 50Hz
+  ACC_HUD_STEP = 6               # ACC_02 message frequency 16Hz
 
   GRA_VBP_STEP = 100             # Send ACC virtual button presses once a second
   GRA_VBP_COUNT = 16             # Send VBP messages for ~0.5s (GRA_ACC_STEP * 16)
@@ -25,6 +31,9 @@ class CarControllerParams:
   STEER_DRIVER_MULTIPLIER = 3    # weight driver torque heavily
   STEER_DRIVER_FACTOR = 1        # from dbc
 
+  MAX_GAS = 2.0                  # 2.0 m/s max acceleration
+  MAX_BRAKE = -3.5               # 3.5 m/s max deceleration
+
 class CANBUS:
   pt = 0
   cam = 2
@@ -33,9 +42,6 @@ class DBC_FILES:
   mqb = "vw_mqb_2010"  # Used for all cars with MQB-style CAN messaging
 
 DBC = defaultdict(lambda: dbc_dict(DBC_FILES.mqb, None))  # type: Dict[str, Dict[str, str]]
-
-TransmissionType = car.CarParams.TransmissionType
-GearShifter = car.CarState.GearShifter
 
 BUTTON_STATES = {
   "accelCruise": False,
