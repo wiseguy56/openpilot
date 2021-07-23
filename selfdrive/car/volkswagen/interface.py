@@ -191,7 +191,7 @@ class CarInterface(CarInterfaceBase):
     if self.CS.parkingBrakeSet:
       events.add(EventName.parkBrake)
     if self.CS.tsk_status in [6, 7]:
-      events.add(EventName.gasUnavailable)
+      events.add(EventName.accFaulted)
 
     if self.CS.CP.openpilotLongitudinalControl:
       for b in buttonEvents:
