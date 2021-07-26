@@ -48,6 +48,7 @@ class CarInterface(CarInterfaceBase):
         ret.enableCruise = False
         ret.openpilotLongitudinalControl = True
         ret.safetyParam = Panda.FLAG_VOLKSWAGEN_LONGITUDINAL
+        ret.communityFeature = True  # For real, not just blatant HKG favortism
 
       if 0xAD in fingerprint[0]:  # Getriebe_11
         ret.transmissionType = TransmissionType.automatic
