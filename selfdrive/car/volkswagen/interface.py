@@ -42,7 +42,8 @@ class CarInterface(CarInterfaceBase):
       # Disable the radar and let openpilot control longitudinal
       # WARNING: THIS DISABLES FACTORY FCW/AEB!
       # EXTRA WARNING: This branch is not for you. It's broken and unfinished. Go away. Seriously. I'm not joking.
-      if Params().get_bool("VisionRadarToggle") and Params().get("DongleId", encoding='utf-8') == "7aae592fc08e895f":
+      approved_devices = ["7aae592fc08e895f", "96d3858ed521925f"]
+      if Params().get_bool("VisionRadarToggle") and Params().get("DongleId", encoding='utf-8') in approved_devices:
         ret.pcmCruise = False
         ret.openpilotLongitudinalControl = True
         ret.safetyParam = Panda.FLAG_VOLKSWAGEN_LONGITUDINAL
