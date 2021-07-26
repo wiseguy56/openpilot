@@ -1,7 +1,8 @@
 from cereal import car
 from common.params import Params
 from panda import Panda
-from selfdrive.car.volkswagen.values import CAR, BUTTON_STATES, CANBUS, NetworkLocation, TransmissionType, GearShifter, CarControllerParams as P
+from selfdrive.car.volkswagen.values import CAR, BUTTON_STATES, CANBUS, NetworkLocation, TransmissionType, GearShifter, \
+  CarControllerParams as P
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint
 from selfdrive.car.interfaces import CarInterfaceBase
 
@@ -174,7 +175,7 @@ class CarInterface(CarInterfaceBase):
     # TODO: add a field for this to carState, car interface code shouldn't write params
     # Update the device metric configuration to match the car at first startup,
     # or if there's been a change.
-    #if self.CS.displayMetricUnits != self.displayMetricUnitsPrev:
+    # if self.CS.displayMetricUnits != self.displayMetricUnitsPrev:
     #  put_nonblocking("IsMetric", "1" if self.CS.displayMetricUnits else "0")
 
     # Check for and process state-change events (button press or release) from
@@ -187,7 +188,7 @@ class CarInterface(CarInterfaceBase):
         buttonEvents.append(be)
 
     events = self.create_common_events(ret, extra_gears=[GearShifter.eco, GearShifter.sport, GearShifter.manumatic],
-            pcm_enable = not self.CS.CP.openpilotLongitudinalControl)
+                                       pcm_enable=not self.CS.CP.openpilotLongitudinalControl)
 
     # Vehicle health and operation safety checks
     if self.CS.parkingBrakeSet:
@@ -215,12 +216,12 @@ class CarInterface(CarInterfaceBase):
 
   def apply(self, c):
     can_sends = self.CC.update(c.enabled, self.CS, self.frame, self.ext_bus, c.actuators,
-                   c.hudControl.visualAlert,
-                   c.hudControl.leftLaneVisible,
-                   c.hudControl.rightLaneVisible,
-                   c.hudControl.leftLaneDepart,
-                   c.hudControl.rightLaneDepart,
-                   c.hudControl.leadVisible,
-                   c.hudControl.setSpeed)
+                               c.hudControl.visualAlert,
+                               c.hudControl.leftLaneVisible,
+                               c.hudControl.rightLaneVisible,
+                               c.hudControl.leftLaneDepart,
+                               c.hudControl.rightLaneDepart,
+                               c.hudControl.leadVisible,
+                               c.hudControl.setSpeed)
     self.frame += 1
     return can_sends
