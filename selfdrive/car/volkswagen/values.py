@@ -32,7 +32,7 @@ class CarControllerParams:
   STEER_DRIVER_FACTOR = 1        # from dbc
 
   MAX_GAS = 2.0                  # 2.0 m/s max acceleration
-  MAX_BRAKE = -3.5               # 3.5 m/s max deceleration
+  MAX_BRAKE = 3.5                # 3.5 m/s max deceleration
 
 class CANBUS:
   pt = 0
