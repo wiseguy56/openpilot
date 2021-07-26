@@ -222,6 +222,7 @@ class CarInterface(CarInterfaceBase):
                                c.hudControl.leftLaneDepart,
                                c.hudControl.rightLaneDepart,
                                c.hudControl.leadVisible,
+                               c.hudControl.speedVisible,
                                c.hudControl.setSpeed)
     self.frame += 1
     return can_sends

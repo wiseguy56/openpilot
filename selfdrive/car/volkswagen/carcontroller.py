@@ -29,7 +29,7 @@ class CarController():
     self.steer_rate_limited = False
 
   def update(self, enabled, CS, frame, ext_bus, actuators, visual_alert, left_lane_visible, right_lane_visible, left_lane_depart,
-             right_lane_depart, lead_visible, set_speed):
+             right_lane_depart, lead_visible, speed_visible, set_speed):
     """ Controls thread """
 
     can_sends = []
@@ -37,10 +37,10 @@ class CarController():
     # **** Acceleration and Braking Controls ******************************** #
 
     if CS.CP.openpilotLongitudinalControl:
-      if enabled:
-        acc_status = 3 if CS.tsk_status in [2, 3, 4, 5] else 2
+      if CS.tsk_status in [2, 3, 4, 5]:
+        acc_status = 3 if enabled else 2
       else:
-        acc_status = 2 if CS.tsk_status in [2, 3, 4, 5] else CS.tsk_status
+        acc_status = CS.tsk_status
 
       accel = round(actuators.gas - actuators.brake, 2)
       apply_accel = interp(accel, ACCEL_LOOKUP_BP, ACCEL_LOOKUP_V)
@@ -113,7 +113,7 @@ class CarController():
       if frame % P.ACC_HUD_STEP == 0:
         idx = (frame / P.ACC_HUD_STEP) % 16
         can_sends.append(volkswagencan.create_mqb_acc_hud_control(self.packer_pt, CANBUS.pt, CS.tsk_status,
-                                                                  set_speed * CV.MS_TO_KPH, idx))
+                                                                  speed_visible, set_speed * CV.MS_TO_KPH, idx))
 
     # **** ACC Button Controls ********************************************** #
 

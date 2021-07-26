@@ -70,10 +70,10 @@ def create_mqb_acc_control(packer, bus, acc_status, apply_accel, stop_req, stand
 
   return packer.make_can_msg("ACC_06", bus, values, idx)
 
-def create_mqb_acc_hud_control(packer, bus, acc_status, set_speed, idx):
+def create_mqb_acc_hud_control(packer, bus, acc_status, speed_visible, set_speed, idx):
   values = {
     "ACC_Status_Anzeige": acc_status,
-    "ACC_Wunschgeschw": set_speed,
+    "ACC_Wunschgeschw": set_speed if speed_visible else 327.36,
     "ACC_Gesetzte_Zeitluecke": 3,
     "ACC_Display_Prio": 3
   }
