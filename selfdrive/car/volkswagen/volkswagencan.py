@@ -54,7 +54,7 @@ def create_mqb_acc_buttons_control(packer, bus, buttonStatesToSend, CS, idx):
   }
   return packer.make_can_msg("GRA_ACC_01", bus, values, idx)
 
-def create_mqb_acc_control(packer, bus, acc_status, apply_accel, standstill, idx):
+def create_mqb_acc_control(packer, bus, acc_status, apply_accel, stop_req, standstill, idx):
   values = {
     "ACC_Typ": 2,  # FIXME: locked to stop and go, need to tweak for cars that only support follow-to-stop
     "ACC_Status_ACC": acc_status,
@@ -62,10 +62,10 @@ def create_mqb_acc_control(packer, bus, acc_status, apply_accel, standstill, idx
     "ACC_Sollbeschleunigung_02": apply_accel if acc_status == 3 else 3.01,
     "ACC_zul_Regelabw_unten": 0.25 if acc_status == 3 else 0,  # FIXME: need comfort regulation logic here
     "ACC_zul_Regelabw_oben": 0.25 if acc_status == 3 else 0,  # FIXME: need comfort regulation logic here
-    "ACC_neg_Sollbeschl_Grad_02": 3.0 if acc_status == 3 else 0,  # FIXME: need gradient regulation logic here
-    "ACC_pos_Sollbeschl_Grad_02": 3.0 if acc_status == 3 else 0,  # FIXME: need gradient regulation logic here
-    "ACC_Anfahren": 0,  # FIXME: set briefly when taking off from standstill
-    "ACC_Anhalten": standstill  # FIXME: hold true when at standstill (and openpilot's standstill sucks for this)
+    "ACC_neg_Sollbeschl_Grad_02": 5.0 if acc_status == 3 else 0,  # FIXME: need gradient regulation logic here
+    "ACC_pos_Sollbeschl_Grad_02": 5.0 if acc_status == 3 else 0,  # FIXME: need gradient regulation logic here
+    "ACC_Anfahren": 0,  # NOTE: set briefly when preparing for start from standstill, probably predictive engine start
+    "ACC_Anhalten": acc_status == 3 and stop_req
   }
 
   return packer.make_can_msg("ACC_06", bus, values, idx)

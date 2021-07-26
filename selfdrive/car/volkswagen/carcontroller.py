@@ -1,4 +1,4 @@
-from common.numpy_fast import clip
+from common.numpy_fast import interp
 from cereal import car
 from selfdrive.config import Conversions as CV
 from selfdrive.car import apply_std_steer_torque_limits
@@ -7,6 +7,9 @@ from selfdrive.car.volkswagen.values import DBC_FILES, CANBUS, MQB_LDW_MESSAGES,
 from opendbc.can.packer import CANPacker
 
 VisualAlert = car.CarControl.HUDControl.VisualAlert
+
+ACCEL_LOOKUP_BP = [-1., 0., P.MAX_GAS / P.MAX_BRAKE]
+ACCEL_LOOKUP_V = [-P.MAX_BRAKE, 0., P.MAX_GAS]
 
 ACCEL_SCALE = max(P.MAX_GAS, P.MAX_BRAKE)
 
@@ -36,13 +39,14 @@ class CarController():
     if CS.CP.openpilotLongitudinalControl:
       acc_status = 3 if enabled and CS.tsk_status in [2, 3, 4, 5] else CS.tsk_status
 
-      apply_accel = round(actuators.gas - actuators.brake, 2)
-      apply_accel = clip(apply_accel * ACCEL_SCALE, P.MAX_BRAKE, P.MAX_GAS)
+      accel = round(actuators.gas - actuators.brake, 2)
+      apply_accel = interp(accel, ACCEL_LOOKUP_BP, ACCEL_LOOKUP_V)
+      stop_req = apply_accel <= 0. and CS.out.vEgo < 0.1
 
       if frame % P.ACC_CONTROL_STEP == 0:
         idx = (frame / P.ACC_CONTROL_STEP) % 16
         can_sends.append(volkswagencan.create_mqb_acc_control(self.packer_pt, CANBUS.pt, acc_status, apply_accel,
-                                                              CS.out.standstill, idx))
+                                                              stop_req, CS.out.standstill, idx))
 
     # **** Steering Controls ************************************************ #
 
