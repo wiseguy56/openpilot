@@ -62,8 +62,7 @@ class LongControl():
                             (CP.longitudinalTuning.kiBP, CP.longitudinalTuning.kiV),
                             rate=RATE,
                             sat_limit=0.8,
-                            convert=compute_gb,
-                            name="long")
+                            convert=compute_gb)
     self.v_pid = 0.0
     self.last_output_gb = 0.0
     self.a_window = deque(maxlen=int(1/DT_MDL)) # 1 second window
