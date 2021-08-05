@@ -41,8 +41,8 @@ class CarController():
 
       apply_accel = round(actuators.gas - actuators.brake, 2)
       apply_accel = clip(apply_accel * ACCEL_SCALE, P.MAX_BRAKE, P.MAX_GAS)
-      stop_request = apply_accel <= 0. and CS.out.vEgo < 0.1
-      start_request = apply_accel >= 0. and CS.out.vEgo < 0.1
+      stop_request = enabled and apply_accel <= 0. and CS.out.vEgo < 0.1
+      start_request = enabled and apply_accel >= 0. and CS.out.vEgo < 0.1
 
       if frame % P.ACC_CONTROL_STEP == 0:
         idx = (frame / P.ACC_CONTROL_STEP) % 16
