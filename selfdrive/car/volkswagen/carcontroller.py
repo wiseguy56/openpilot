@@ -36,18 +36,18 @@ class CarController():
     if CS.CP.openpilotLongitudinalControl:
       if CS.tsk_status in [2, 3, 4, 5]:
         acc_status = 3 if enabled else 2
-      elif CS.tsk_status in [2, 3, 4, 5]:
-        acc_status = 2
       else:
         acc_status = CS.tsk_status
 
       apply_accel = round(actuators.gas - actuators.brake, 2)
       apply_accel = clip(apply_accel * ACCEL_SCALE, P.MAX_BRAKE, P.MAX_GAS)
+      stop_request = apply_accel <= 0. and CS.out.vEgo < 0.1
+      start_request = apply_accel >= 0. and CS.out.vEgo < 0.1
 
       if frame % P.ACC_CONTROL_STEP == 0:
         idx = (frame / P.ACC_CONTROL_STEP) % 16
         can_sends.append(volkswagencan.create_mqb_acc_control(self.packer_pt, CANBUS.pt, acc_status, apply_accel,
-                                                              CS.out.standstill, idx))
+                                                              stop_request, start_request, CS.out.standstill, idx))
 
     # **** Steering Controls ************************************************ #
 
