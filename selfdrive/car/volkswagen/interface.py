@@ -77,10 +77,10 @@ class CarInterface(CarInterfaceBase):
     ret.gasMaxV = [0.6]  # max gas allowed
     ret.brakeMaxBP = [0.]  # m/s
     ret.brakeMaxV = [1.]  # max brake allowed
-    ret.longitudinalTuning.kpBP = [0., 35.]
-    ret.longitudinalTuning.kpV = [1., 0.5]
-    ret.longitudinalTuning.kiBP = [0., 35.]
-    ret.longitudinalTuning.kiV = [0.13, 0.07]
+    ret.longitudinalTuning.kpBP = [0.]
+    ret.longitudinalTuning.kpV = [0.5]
+    ret.longitudinalTuning.kiBP = [0.]
+    ret.longitudinalTuning.kiV = [0.1]
     ret.minSpeedCan = 0.0
 
     # Per-chassis tuning values, override tuning defaults here if desired
