@@ -77,10 +77,12 @@ class LongControl():
       v_target = interp(DEFAULT_LONG_LAG, T_IDXS[:CONTROL_N], long_plan.speeds)
       v_target_future = long_plan.speeds[-1]
       a_target = interp(DEFAULT_LONG_LAG, T_IDXS[:CONTROL_N], long_plan.accels)
+      j_target = interp(DEFAULT_LONG_LAG, T_IDXS[:CONTROL_N], long_plan.jerks)
     else:
       v_target = 0.0
       v_target_future = 0.0
       a_target = 0.0
+      j_target = 0.0
 
 
     # Actuation limits
@@ -134,4 +136,4 @@ class LongControl():
     final_gas = clip(output_gb, 0., gas_max)
     final_brake = -clip(output_gb, -brake_max, 0.)
 
-    return final_gas, final_brake, v_target, a_target
+    return final_gas, final_brake, v_target, a_target, j_target
