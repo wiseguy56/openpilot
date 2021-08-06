@@ -81,6 +81,7 @@ class CarInterface(CarInterfaceBase):
     ret.longitudinalTuning.kpV = [1., 0.5]
     ret.longitudinalTuning.kiBP = [0., 35.]
     ret.longitudinalTuning.kiV = [0.13, 0.07]
+    ret.minSpeedCan = 0.0
 
     # Per-chassis tuning values, override tuning defaults here if desired
 
