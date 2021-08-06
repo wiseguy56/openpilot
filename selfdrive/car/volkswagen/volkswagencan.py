@@ -54,16 +54,16 @@ def create_mqb_acc_buttons_control(packer, bus, buttonStatesToSend, CS, idx):
   }
   return packer.make_can_msg("GRA_ACC_01", bus, values, idx)
 
-def create_mqb_acc_control(packer, bus, acc_status, apply_accel, stop_request, start_request, standstill, idx):
+def create_mqb_acc_control(packer, bus, enabled, acc_status, apply_accel, stop_request, start_request, idx):
   values = {
     "ACC_Typ": 2,  # FIXME: locked to stop and go, need to tweak for cars that only support follow-to-stop
     "ACC_Status_ACC": acc_status,
-    "ACC_StartStopp_Info": 1 if acc_status == 3 and not standstill else 0,
+    "ACC_StartStopp_Info": enabled,
     "ACC_Sollbeschleunigung_02": apply_accel if acc_status == 3 else 3.01,
-    "ACC_zul_Regelabw_unten": 0.25 if acc_status == 3 else 0,  # FIXME: need comfort regulation logic here
-    "ACC_zul_Regelabw_oben": 0.25 if acc_status == 3 else 0,  # FIXME: need comfort regulation logic here
-    "ACC_neg_Sollbeschl_Grad_02": 3.0 if acc_status == 3 else 0,  # FIXME: need gradient regulation logic here
-    "ACC_pos_Sollbeschl_Grad_02": 3.0 if acc_status == 3 else 0,  # FIXME: need gradient regulation logic here
+    "ACC_zul_Regelabw_unten": 0.25 if enabled else 0,  # FIXME: need comfort regulation logic here
+    "ACC_zul_Regelabw_oben": 0.25 if enabled else 0,  # FIXME: need comfort regulation logic here
+    "ACC_neg_Sollbeschl_Grad_02": 3.0 if enabled else 0,  # FIXME: need gradient regulation logic here
+    "ACC_pos_Sollbeschl_Grad_02": 3.0 if enabled else 0,  # FIXME: need gradient regulation logic here
     "ACC_Anfahren": start_request,
     "ACC_Anhalten": stop_request
   }
