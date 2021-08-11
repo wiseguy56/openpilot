@@ -118,7 +118,7 @@ class CarController():
 
     # FIXME: this entire section is in desperate need of refactoring
 
-    if True:  # if not CS.CP.openpilotLongitudinalControl:
+    if not CS.CP.openpilotLongitudinalControl:
       if frame > self.graMsgStartFramePrev + P.GRA_VBP_STEP:
         if not enabled and CS.out.cruiseState.enabled:
           # Cancel ACC if it's engaged with OP disengaged.
