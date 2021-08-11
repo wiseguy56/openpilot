@@ -48,7 +48,7 @@ class CarController():
         idx = (frame / P.ACC_CONTROL_STEP) % 16
         can_sends.append(volkswagencan.create_mqb_acc_control(self.packer_pt, CANBUS.pt, enabled, acc_status,
                                                               actuators.directAccel, actuators.directJerk,
-                                                              stop_request, start_request, idx))
+                                                              stop_request, start_request, lead_visible, idx))
 
     # **** Steering Controls ************************************************ #
 

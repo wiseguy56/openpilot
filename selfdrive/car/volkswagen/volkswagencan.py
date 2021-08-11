@@ -54,14 +54,15 @@ def create_mqb_acc_buttons_control(packer, bus, buttonStatesToSend, CS, idx):
   }
   return packer.make_can_msg("GRA_ACC_01", bus, values, idx)
 
-def create_mqb_acc_control(packer, bus, enabled, acc_status, direct_accel, direct_jerk, stop_request, start_request, idx):
+def create_mqb_acc_control(packer, bus, enabled, acc_status, direct_accel, direct_jerk, stop_request, start_request,
+                           lead_visible, idx):
   values = {
     "ACC_Typ": 2,  # FIXME: locked to stop and go, need to tweak for cars that only support follow-to-stop
     "ACC_Status_ACC": acc_status,
     "ACC_StartStopp_Info": enabled,
     "ACC_Sollbeschleunigung_02": direct_accel if enabled else 3.01,
-    "ACC_zul_Regelabw_unten": 0.1 if enabled else 0,  # FIXME: need comfort regulation logic here
-    "ACC_zul_Regelabw_oben": 0.1 if enabled else 0,  # FIXME: need comfort regulation logic here
+    "ACC_zul_Regelabw_unten": 0.1 if enabled and not lead_visible else 0,  # FIXME: need comfort regulation logic here
+    "ACC_zul_Regelabw_oben": 0.1 if enabled and not lead_visible else 0,  # FIXME: need comfort regulation logic here
     "ACC_neg_Sollbeschl_Grad_02": direct_jerk if enabled else 0,
     "ACC_pos_Sollbeschl_Grad_02": direct_jerk if enabled else 0,
     "ACC_Anfahren": start_request,
