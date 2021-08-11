@@ -46,6 +46,7 @@ class CarInterface(CarInterfaceBase):
       if Params().get_bool("VisionRadarToggle") and Params().get("CarVin", encoding='utf-8') in allowed_vins:
         ret.pcmCruise = False
         ret.openpilotLongitudinalControl = True
+        ret.directAccelControl = True
         ret.safetyParam = Panda.FLAG_VOLKSWAGEN_LONGITUDINAL
 
       if 0xAD in fingerprint[0]:  # Getriebe_11
@@ -82,6 +83,7 @@ class CarInterface(CarInterfaceBase):
     ret.longitudinalTuning.kiBP = [0.]
     ret.longitudinalTuning.kiV = [0.1]
     ret.minSpeedCan = 0.0
+    ret.startAccel = 0.8  # may really be 0.75 or thereabout
 
     # Per-chassis tuning values, override tuning defaults here if desired
 
