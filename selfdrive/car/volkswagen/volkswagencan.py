@@ -63,8 +63,8 @@ def create_mqb_acc_control(packer, bus, enabled, acc_status, direct_accel, direc
     "ACC_Sollbeschleunigung_02": direct_accel if enabled else 3.01,
     "ACC_zul_Regelabw_unten": 0.1 if enabled and not lead_visible else 0,  # FIXME: need comfort regulation logic here
     "ACC_zul_Regelabw_oben": 0.1 if enabled and not lead_visible else 0,  # FIXME: need comfort regulation logic here
-    "ACC_neg_Sollbeschl_Grad_02": direct_jerk if enabled else 0,
-    "ACC_pos_Sollbeschl_Grad_02": direct_jerk if enabled else 0,
+    "ACC_neg_Sollbeschl_Grad_02": 3.0 if enabled else 0,
+    "ACC_pos_Sollbeschl_Grad_02": 3.0 if enabled else 0,
     "ACC_Anfahren": start_request,
     "ACC_Anhalten": stop_request
   }
