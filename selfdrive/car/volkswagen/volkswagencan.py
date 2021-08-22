@@ -54,8 +54,8 @@ def create_mqb_acc_buttons_control(packer, bus, buttonStatesToSend, CS, idx):
   }
   return packer.make_can_msg("GRA_ACC_01", bus, values, idx)
 
-def create_mqb_acc_control(packer, bus, enabled, acc_status, direct_accel, direct_jerk, stop_request, start_request,
-                           lead_visible, idx):
+def create_mqb_acc_06_control(packer, bus, enabled, acc_status, direct_accel, acc_stopping, acc_starting, lead_visible,
+                              idx):
   values = {
     "ACC_Typ": 2,  # FIXME: locked to stop and go, need to tweak for cars that only support follow-to-stop
     "ACC_Status_ACC": acc_status,
@@ -65,11 +65,28 @@ def create_mqb_acc_control(packer, bus, enabled, acc_status, direct_accel, direc
     "ACC_zul_Regelabw_oben": 0.1 if enabled and not lead_visible else 0,  # FIXME: need comfort regulation logic here
     "ACC_neg_Sollbeschl_Grad_02": 3.0 if enabled else 0,
     "ACC_pos_Sollbeschl_Grad_02": 3.0 if enabled else 0,
-    "ACC_Anfahren": start_request,
-    "ACC_Anhalten": stop_request
+    "ACC_Anfahren": acc_starting,
+    "ACC_Anhalten": acc_stopping,
   }
 
   return packer.make_can_msg("ACC_06", bus, values, idx)
+
+def create_mqb_acc_07_control(packer, bus, enabled, direct_accel, acc_stopping, acc_starting, acc_hold_request,
+                              acc_hold_release, weird_value, idx):
+  values = {
+    "XXX_Maybe_Engine_Start_Request": 2,  # TODO
+    "XXX_Always_1": 1,
+    "XXX_Maybe_Engine_Stop_Release": not acc_hold_request,  # TODO this isn't S/S, AHR but also slight delay past AHR
+    "XXX_I_Have_No_Real_Idea": weird_value,  # FIXME
+    "ACC_Engaged": enabled,
+    "ACC_Anhalten": acc_stopping,
+    "ACC_Anhaltevorgang": acc_hold_request,
+    "ACC_Anfahrvorgang": acc_hold_release,
+    "ACC_Anfahren": acc_starting,
+    "ACC_Sollbeschleunigung_01": direct_accel,
+  }
+
+  return packer.make_can_msg("ACC_07", bus, values, idx)
 
 def create_mqb_acc_hud_control(packer, bus, acc_status, set_speed, idx):
   values = {
