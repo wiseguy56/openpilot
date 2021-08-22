@@ -56,7 +56,7 @@ class CarInterface(CarInterfaceBase):
       else:  # No trans message at all, must be a true stick-shift manual
         ret.transmissionType = TransmissionType.manual
 
-      if 0x120 in fingerprint[1]:  # TSK_06 seen on bus 1, we're wired to the CAN gateway
+      if True:  # just hotwire the damn location for now -- if 0x120 in fingerprint[1]:  # TSK_06 seen on bus 1, we're wired to the CAN gateway
         ret.networkLocation = NetworkLocation.gateway
       else:  # We're wired to the LKAS camera
         ret.networkLocation = NetworkLocation.fwdCamera
