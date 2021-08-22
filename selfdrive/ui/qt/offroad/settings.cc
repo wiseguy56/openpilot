@@ -74,6 +74,12 @@ TogglesPanel::TogglesPanel(QWidget *parent) : QWidget(parent) {
                                   "../assets/offroad/icon_road.png",
                                   this));
 
+  toggles.append(new ParamControl("VisionRadarToggle",
+                                  "\U0001F3B8 \U0001F468 Come on, join the joyride \U0001F3A4 \U0001F469",
+                                  "Hello, you fool, I love you",
+                                  "../assets/offroad/icon_road.png",
+                                  this));
+
 #ifdef ENABLE_MAPS
   toggles.append(new ParamControl("NavSettingTime24h",
                                   "Show ETA in 24h format",

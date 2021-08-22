@@ -1,8 +1,11 @@
 from cereal import car
+from common.params import Params
+from panda import Panda
 from selfdrive.car.volkswagen.values import CAR, BUTTON_STATES, CANBUS, NetworkLocation, TransmissionType, GearShifter
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint
 from selfdrive.car.interfaces import CarInterfaceBase
 
+ButtonType = car.CarState.ButtonEvent.Type
 EventName = car.CarEvent.EventName
 
 
@@ -22,7 +25,7 @@ class CarInterface(CarInterfaceBase):
 
   @staticmethod
   def compute_gb(accel, speed):
-    return float(accel) / 4.0
+    return float(accel)
 
   @staticmethod
   def get_params(candidate, fingerprint=gen_empty_fingerprint(), car_fw=None):
@@ -36,6 +39,16 @@ class CarInterface(CarInterfaceBase):
       ret.safetyModel = car.CarParams.SafetyModel.volkswagen
       ret.enableBsm = 0x30F in fingerprint[0]
 
+      # Disable the radar and let openpilot control longitudinal
+      # WARNING: THIS DISABLES FACTORY FCW/AEB!
+      # EXTRA WARNING: This branch is not for you. It's broken and unfinished. Go away. Seriously. I'm not joking.
+      allowed_vins = ["WVWVF7AU2JW177386", "3VV4B7AX4LM074301"]
+      if Params().get_bool("VisionRadarToggle") and Params().get("CarVin", encoding='utf-8') in allowed_vins:
+        ret.pcmCruise = False
+        ret.openpilotLongitudinalControl = True
+        ret.directAccelControl = True
+        ret.safetyParam = Panda.FLAG_VOLKSWAGEN_LONGITUDINAL
+
       if 0xAD in fingerprint[0]:  # Getriebe_11
         ret.transmissionType = TransmissionType.automatic
       elif 0x187 in fingerprint[0]:  # EV_Gearshift
@@ -43,7 +56,7 @@ class CarInterface(CarInterfaceBase):
       else:  # No trans message at all, must be a true stick-shift manual
         ret.transmissionType = TransmissionType.manual
 
-      if 0x86 in fingerprint[1]:  # LWI_01 seen on bus 1, we're wired to the CAN gateway
+      if 0x120 in fingerprint[1]:  # TSK_06 seen on bus 1, we're wired to the CAN gateway
         ret.networkLocation = NetworkLocation.gateway
       else:  # We're wired to the LKAS camera
         ret.networkLocation = NetworkLocation.fwdCamera
@@ -60,6 +73,17 @@ class CarInterface(CarInterfaceBase):
     ret.lateralTuning.pid.kf = 0.00006
     ret.lateralTuning.pid.kpV = [0.6]
     ret.lateralTuning.pid.kiV = [0.2]
+
+    ret.gasMaxBP = [0.]  # m/s
+    ret.gasMaxV = [1.]  # max gas allowed
+    ret.brakeMaxBP = [0.]  # m/s
+    ret.brakeMaxV = [1.]  # max brake allowed
+    ret.longitudinalTuning.kpBP = [0.]
+    ret.longitudinalTuning.kpV = [0.5]
+    ret.longitudinalTuning.kiBP = [0.]
+    ret.longitudinalTuning.kiV = [0.1]
+    ret.minSpeedCan = 0.0
+    ret.startAccel = 0.8  # may really be 0.75 or thereabout
 
     # Per-chassis tuning values, override tuning defaults here if desired
 
@@ -164,11 +188,23 @@ class CarInterface(CarInterfaceBase):
         be.pressed = self.CS.buttonStates[button]
         buttonEvents.append(be)
 
-    events = self.create_common_events(ret, extra_gears=[GearShifter.eco, GearShifter.sport, GearShifter.manumatic])
+    events = self.create_common_events(ret, extra_gears=[GearShifter.eco, GearShifter.sport, GearShifter.manumatic],
+                                       pcm_enable=not self.CS.CP.openpilotLongitudinalControl)
 
     # Vehicle health and operation safety checks
     if self.CS.parkingBrakeSet:
       events.add(EventName.parkBrake)
+    if self.CS.tsk_status in [6, 7]:
+      events.add(EventName.accFaulted)
+
+    if self.CS.CP.openpilotLongitudinalControl:
+      for b in buttonEvents:
+        # do enable on falling edge of both accel and decel buttons
+        if b.type in [ButtonType.setCruise, ButtonType.resumeCruise] and not b.pressed:
+          events.add(EventName.buttonEnable)
+        # do disable on rising edge of cancel
+        if b.type == "cancel" and b.pressed:
+          events.add(EventName.buttonCancel)
 
     ret.events = events.to_msg()
     ret.buttonEvents = buttonEvents
@@ -186,6 +222,8 @@ class CarInterface(CarInterfaceBase):
                    c.hudControl.leftLaneVisible,
                    c.hudControl.rightLaneVisible,
                    c.hudControl.leftLaneDepart,
-                   c.hudControl.rightLaneDepart)
+                   c.hudControl.rightLaneDepart,
+                   c.hudControl.leadVisible,
+                   c.hudControl.setSpeed)
     self.frame += 1
     return can_sends

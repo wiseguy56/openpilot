@@ -149,6 +149,7 @@ class Controls:
     self.logged_comm_issue = False
     self.v_target = 0.0
     self.a_target = 0.0
+    self.j_target = 0.0
 
     # TODO: no longer necessary, aside from process replay
     self.sm['liveParameters'].valid = True
@@ -460,7 +461,9 @@ class Controls:
 
     if not self.joystick_mode:
       # Gas/Brake PID loop
-      actuators.gas, actuators.brake, self.v_target, self.a_target = self.LoC.update(self.active, CS, self.CP, long_plan)
+      actuators.gas, actuators.brake, self.v_target, self.a_target, self.j_target = self.LoC.update(self.active, CS, self.CP, long_plan)
+      actuators.directAccel = self.a_target
+      actuators.directJerk = self.j_target
 
       # Steering PID loop and lateral MPC
       desired_curvature, desired_curvature_rate = get_lag_adjusted_curvature(self.CP, CS.vEgo,

@@ -1,10 +1,14 @@
+from common.numpy_fast import clip
 from cereal import car
+from selfdrive.config import Conversions as CV
 from selfdrive.car import apply_std_steer_torque_limits
 from selfdrive.car.volkswagen import volkswagencan
 from selfdrive.car.volkswagen.values import DBC_FILES, CANBUS, MQB_LDW_MESSAGES, BUTTON_STATES, CarControllerParams as P
 from opendbc.can.packer import CANPacker
 
 VisualAlert = car.CarControl.HUDControl.VisualAlert
+
+ACCEL_SCALE = max(P.MAX_GAS, P.MAX_BRAKE)
 
 class CarController():
   def __init__(self, dbc_name, CP, VM):
@@ -21,10 +25,30 @@ class CarController():
 
     self.steer_rate_limited = False
 
-  def update(self, enabled, CS, frame, ext_bus, actuators, visual_alert, left_lane_visible, right_lane_visible, left_lane_depart, right_lane_depart):
+  def update(self, enabled, CS, frame, ext_bus, actuators, visual_alert, left_lane_visible, right_lane_visible, left_lane_depart,
+             right_lane_depart, lead_visible, set_speed):
     """ Controls thread """
 
     can_sends = []
+
+    # **** Acceleration and Braking Controls ******************************** #
+
+    if CS.CP.openpilotLongitudinalControl:
+      if CS.tsk_status in [2, 3, 4, 5]:
+        acc_status = 3 if enabled else 2
+      else:
+        acc_status = CS.tsk_status
+
+      apply_accel = round(actuators.gas - actuators.brake, 2)
+      apply_accel = clip(apply_accel * ACCEL_SCALE, P.MAX_BRAKE, P.MAX_GAS)
+      stop_request = enabled and apply_accel <= 0. and CS.out.vEgo < 0.1
+      start_request = enabled and apply_accel >= 0. and CS.out.vEgo < 0.1
+
+      if frame % P.ACC_CONTROL_STEP == 0:
+        idx = (frame / P.ACC_CONTROL_STEP) % 16
+        can_sends.append(volkswagencan.create_mqb_acc_control(self.packer_pt, CANBUS.pt, enabled, acc_status,
+                                                              actuators.directAccel, actuators.directJerk,
+                                                              stop_request, start_request, lead_visible, idx))
 
     # **** Steering Controls ************************************************ #
 
@@ -84,32 +108,39 @@ class CarController():
                                                             CS.ldw_dlc, CS.ldw_tlc, CS.out.standstill,
                                                             left_lane_depart, right_lane_depart))
 
+    if CS.CP.openpilotLongitudinalControl:
+      if frame % P.ACC_HUD_STEP == 0:
+        idx = (frame / P.ACC_HUD_STEP) % 16
+        can_sends.append(volkswagencan.create_mqb_acc_hud_control(self.packer_pt, CANBUS.pt, CS.tsk_status,
+                                                                  set_speed * CV.MS_TO_KPH, idx))
+
     # **** ACC Button Controls ********************************************** #
 
     # FIXME: this entire section is in desperate need of refactoring
 
-    if frame > self.graMsgStartFramePrev + P.GRA_VBP_STEP:
-      if not enabled and CS.out.cruiseState.enabled:
-        # Cancel ACC if it's engaged with OP disengaged.
-        self.graButtonStatesToSend = BUTTON_STATES.copy()
-        self.graButtonStatesToSend["cancel"] = True
-      elif enabled and CS.out.standstill:
-        # Blip the Resume button if we're engaged at standstill.
-        # FIXME: This is a naive implementation, improve with visiond or radar input.
-        # A subset of MQBs like to "creep" too aggressively with this implementation.
-        self.graButtonStatesToSend = BUTTON_STATES.copy()
-        self.graButtonStatesToSend["resumeCruise"] = True
+    if not CS.CP.openpilotLongitudinalControl:
+      if frame > self.graMsgStartFramePrev + P.GRA_VBP_STEP:
+        if not enabled and CS.out.cruiseState.enabled:
+          # Cancel ACC if it's engaged with OP disengaged.
+          self.graButtonStatesToSend = BUTTON_STATES.copy()
+          self.graButtonStatesToSend["cancel"] = True
+        elif enabled and CS.out.standstill:
+          # Blip the Resume button if we're engaged at standstill.
+          # FIXME: This is a naive implementation, improve with visiond or radar input.
+          # A subset of MQBs like to "creep" too aggressively with this implementation.
+          self.graButtonStatesToSend = BUTTON_STATES.copy()
+          self.graButtonStatesToSend["resumeCruise"] = True
 
-    if CS.graMsgBusCounter != self.graMsgBusCounterPrev:
-      self.graMsgBusCounterPrev = CS.graMsgBusCounter
-      if self.graButtonStatesToSend is not None:
-        if self.graMsgSentCount == 0:
-          self.graMsgStartFramePrev = frame
-        idx = (CS.graMsgBusCounter + 1) % 16
-        can_sends.append(volkswagencan.create_mqb_acc_buttons_control(self.packer_pt, ext_bus, self.graButtonStatesToSend, CS, idx))
-        self.graMsgSentCount += 1
-        if self.graMsgSentCount >= P.GRA_VBP_COUNT:
-          self.graButtonStatesToSend = None
-          self.graMsgSentCount = 0
+      if CS.graMsgBusCounter != self.graMsgBusCounterPrev:
+        self.graMsgBusCounterPrev = CS.graMsgBusCounter
+        if self.graButtonStatesToSend is not None:
+          if self.graMsgSentCount == 0:
+            self.graMsgStartFramePrev = frame
+          idx = (CS.graMsgBusCounter + 1) % 16
+          can_sends.append(volkswagencan.create_mqb_acc_buttons_control(self.packer_pt, ext_bus, self.graButtonStatesToSend, CS, idx))
+          self.graMsgSentCount += 1
+          if self.graMsgSentCount >= P.GRA_VBP_COUNT:
+            self.graButtonStatesToSend = None
+            self.graMsgSentCount = 0
 
     return can_sends
