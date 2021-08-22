@@ -83,7 +83,7 @@ def create_mqb_acc_07_control(packer, bus, enabled, direct_accel, acc_stopping, 
     "ACC_Anhaltevorgang": acc_hold_request,
     "ACC_Anfahrvorgang": acc_hold_release,
     "ACC_Anfahren": acc_starting,
-    "XXX_Lead_Car_Relative_Speed": 0xFE,
+    "XXX_Lead_Car_Relative_Speed": 0x65,
     "ACC_Sollbeschleunigung_01": direct_accel if enabled else 3.01,
   }
 
