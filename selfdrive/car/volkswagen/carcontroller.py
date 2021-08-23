@@ -40,7 +40,7 @@ class CarController():
         acc_status = CS.tsk_status
 
       acc_stopping = enabled and actuators.directAccel <= 0. and CS.out.vEgo < 0.3
-      acc_starting = enabled and actuators.directAccel >= 0. and CS.out.vEgo < 0.3
+      acc_starting = enabled and actuators.directAccel > 0. and CS.out.vEgo < 0.3
       acc_hold_request = acc_stopping and not CS.esp_hold_confirmation
       acc_hold_release = acc_starting and CS.esp_hold_confirmation
       if acc_hold_request:
