@@ -74,14 +74,6 @@ class CarInterface(CarInterfaceBase):
     ret.lateralTuning.pid.kpV = [0.6]
     ret.lateralTuning.pid.kiV = [0.2]
 
-    ret.gasMaxBP = [0.]  # m/s
-    ret.gasMaxV = [1.]  # max gas allowed
-    ret.brakeMaxBP = [0.]  # m/s
-    ret.brakeMaxV = [1.]  # max brake allowed
-    ret.longitudinalTuning.kpBP = [0.]
-    ret.longitudinalTuning.kpV = [0.5]
-    ret.longitudinalTuning.kiBP = [0.]
-    ret.longitudinalTuning.kiV = [0.1]
     #ret.minSpeedCan = 0.0
     ret.startAccel = 0.8  # may really be 0.75 or thereabout
 
