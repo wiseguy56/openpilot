@@ -44,7 +44,7 @@ class CarController():
 
       if enabled and accel <= 0. and CS.out.vEgo < CS.CP.minSpeedCan:
         self.openpilot_stopping = True
-      elif accel > CS.CP.startAccel or CS.out.vEgo > CS.CP.minSpeedCan:
+      elif accel > CS.CP.startAccel or CS.out.vEgo > CS.CP.minSpeedCan or not enabled:
         self.openpilot_stopping = False
 
       acc_stopping, acc_starting, acc_hold_request, acc_hold_release = False, False, False, False
@@ -52,7 +52,7 @@ class CarController():
         accel = -0.5
         acc_stopping = True
         acc_hold_request = not CS.esp_hold_confirmation
-      else:
+      elif enabled:
         acc_starting = CS.out.vEgo < CS.CP.minSpeedCan
         acc_hold_release = CS.esp_hold_confirmation
 
