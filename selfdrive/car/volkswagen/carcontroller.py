@@ -24,6 +24,7 @@ class CarController():
     self.graMsgBusCounterPrev = 0
 
     self.steer_rate_limited = False
+    self.openpilot_stopping = False
 
   def update(self, enabled, CS, frame, ext_bus, actuators, visual_alert, left_lane_visible, right_lane_visible, left_lane_depart,
              right_lane_depart, lead_visible, set_speed):
@@ -40,10 +41,21 @@ class CarController():
         acc_status = CS.tsk_status
 
       accel = actuators.directAccel * 1.15  # Test scaling
-      acc_stopping = enabled and accel <= 0. and CS.out.vEgo < 0.3
-      acc_starting = enabled and accel > 0. and CS.out.vEgo < 0.3
-      acc_hold_request = acc_stopping and not CS.esp_hold_confirmation
-      acc_hold_release = acc_starting and CS.esp_hold_confirmation
+
+      if enabled and accel <= 0. and CS.out.vEgo < CS.CP.minSpeedCan:
+        self.openpilot_stopping = True
+      elif accel > CS.CP.startAccel or CS.out.vEgo > CS.CP.minSpeedCan:
+        self.openpilot_stopping = False
+
+      acc_stopping, acc_starting, acc_hold_request, acc_hold_release = False, False, False, False
+      if self.openpilot_stopping:
+        accel = -0.5
+        acc_stopping = True
+        acc_hold_request = not CS.esp_hold_confirmation
+      else:
+        acc_starting = CS.out.vEgo < CS.CP.minSpeedCan
+        acc_hold_release = CS.esp_hold_confirmation
+
       if acc_hold_request:
         weird_value = 0x88
       elif acc_stopping:
