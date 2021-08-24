@@ -53,7 +53,7 @@ class CarController():
         acc_stopping = True
         acc_hold_request = not CS.esp_hold_confirmation
       else:
-        acc_starting = CS.out.vEgo < CS.CP.minSpeedCan
+        acc_starting = bool(CS.out.vEgo < CS.CP.minSpeedCan)
         acc_hold_release = CS.esp_hold_confirmation
 
       if acc_hold_request:
