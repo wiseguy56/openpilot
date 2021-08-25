@@ -42,7 +42,7 @@ class CarController():
 
       accel = actuators.directAccel * 1.15  # Test scaling
 
-      if enabled and accel <= 0. and CS.out.vEgo < CS.CP.minSpeedCan:
+      if enabled and accel <= 0.1 and CS.out.vEgo < CS.CP.minSpeedCan:
         self.openpilot_stopping = True
       elif accel > CS.CP.startAccel or CS.out.vEgo > CS.CP.minSpeedCan or not enabled:
         self.openpilot_stopping = False
