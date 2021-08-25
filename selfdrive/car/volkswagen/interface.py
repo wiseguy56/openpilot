@@ -75,7 +75,7 @@ class CarInterface(CarInterfaceBase):
     ret.lateralTuning.pid.kiV = [0.2]
 
     #ret.minSpeedCan = 0.0
-    ret.startAccel = 0.8  # may really be 0.75 or thereabout
+    ret.startAccel = 0.5  # may really be 0.75 or thereabout
 
     # Per-chassis tuning values, override tuning defaults here if desired
 
