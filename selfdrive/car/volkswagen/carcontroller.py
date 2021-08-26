@@ -40,7 +40,7 @@ class CarController():
       else:
         acc_status = CS.tsk_status
 
-      accel = actuators.directAccel
+      accel = actuators.directAccel * 1.3
 
       if enabled and accel <= 0.1 and CS.out.vEgo < CS.CP.minSpeedCan:
         self.openpilot_stopping = True
@@ -48,7 +48,7 @@ class CarController():
         self.openpilot_stopping = False
 
       # Try to reduce lag / increase response by scaling accel by the amount of shortfall
-      accel += accel - CS.out.aEgo
+      #accel += accel - CS.out.aEgo
       accel = clip(accel, P.MAX_GAS, P.MAX_BRAKE)
 
       acc_stopping, acc_starting, acc_hold_request, acc_hold_release = False, False, False, False
