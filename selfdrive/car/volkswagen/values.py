@@ -74,6 +74,7 @@ class CAR:
   PASSAT_NMS = "VOLKSWAGEN PASSAT NMS"        # Chassis A3, North America/China/Mideast NMS Passat, incl. facelift
   TIGUAN_MK2 = "VOLKSWAGEN TIGUAN 2ND GEN"    # Chassis AD/BW, Mk2 VW Tiguan and variants
   TOURAN_MK2 = "VOLKSWAGEN TOURAN 2ND GEN"    # Chassis 1T, Mk2 VW Touran and variants
+  UP_MK1 = "VOLKSWAGEN UP! 1ST GEN"           # Chassis AA, Mk1 Volkswagen up!, SEAT Mii, Škoda Citigo
   AUDI_A3_MK3 = "AUDI A3 3RD GEN"             # Chassis 8V/FF, Mk3 Audi A3 and variants
   AUDI_Q2_MK1 = "AUDI Q2 1ST GEN"             # Chassis GA, Mk1 Audi Q2 (RoW) and Q2L (China only)
   AUDI_Q3_MK2 = "AUDI Q3 2ND GEN"             # Chassis 8U/F3/FS, Mk2 Audi Q3 and variants
@@ -86,7 +87,7 @@ class CAR:
 
 # All PQ35/PQ46/NMS platform CARs should be on this list
 
-PQ_CARS = [CAR.GOLF_MK6, CAR.PASSAT_NMS]
+PQ_CARS = [CAR.GOLF_MK6, CAR.PASSAT_NMS, CAR.UP_MK1]
 
 FINGERPRINTS = {
   CAR.GOLF_MK6: [
@@ -369,6 +370,25 @@ FW_VERSIONS = {
     (Ecu.fwdRadar, 0x757, None): [
       b'\xf1\x873Q0907572C \xf1\x890195',
     ],
+  },
+  CAR.UP_MK1: {
+    (Ecu.engine, 0x7e0, None): [
+      b'\xf1\x870EA906016M \xf1\x897453',
+    ],
+    # Only onboarded NSF is an e-up! without a separate trans controller
+    #(Ecu.transmission, 0x7e1, None): [
+    #  b'',
+    #],
+    (Ecu.srs, 0x715, None): [
+      b'\xf1\x876C0959655S \xf1\x890503\xf1\x82\0231111111111--000000----01----111111--11',
+    ],
+    (Ecu.eps, 0x712, None): [
+      b'\xf1\x872Q1909144R \xf1\x896212',
+    ],
+    # Only onboarded NSF is an e-up! without ACC
+    #(Ecu.fwdRadar, 0x757, None): [
+    #  b'',
+    #],
   },
   CAR.AUDI_A3_MK3: {
     (Ecu.engine, 0x7e0, None): [

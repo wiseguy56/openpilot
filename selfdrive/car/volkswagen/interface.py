@@ -116,6 +116,10 @@ class CarInterface(CarInterfaceBase):
       ret.mass = 1516 + STD_CARGO_KG
       ret.wheelbase = 2.79
 
+    elif candidate == CAR.UP_MK1:
+      ret.mass = 963 + STD_CARGO_KG
+      ret.wheelbase = 2.42
+
     elif candidate == CAR.AUDI_A3_MK3:
       # Averages of all 8V A3 variants
       ret.mass = 1335 + STD_CARGO_KG

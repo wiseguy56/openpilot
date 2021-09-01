@@ -244,27 +244,13 @@ class CarState(CarStateBase):
     # TODO: Consume FCW/AEB data from factory radar, if present
 
     # Update ACC radar status.
-    accStatus = ext_cp.vl["ACC_GRA_Anziege"]["ACA_StaACC"]
-    if accStatus == 2:
-      # ACC okay and enabled, but not currently engaged
-      ret.cruiseState.available = True
-      ret.cruiseState.enabled = False
-    elif accStatus in [3, 4, 5]:
-      # ACC okay and enabled, currently engaged and regulating speed (3) or engaged with driver accelerating (4) or overrun (5)
-      # Verify against Motor_2 to keep in lockstep with Panda safety
-      ret.cruiseState.available = True
-      if pt_cp.vl["Motor_2"]["GRA_Status"] in [1, 2]:
-        ret.cruiseState.enabled = True
-      else:
-        ret.cruiseState.enabled = False
-    else:
-      # ACC okay but disabled (1), or a radar visibility or other fault/disruption (6 or 7)
-      ret.cruiseState.available = False
-      ret.cruiseState.enabled = False
+    ret.cruiseState.available = bool(pt_cp.vl["GRA_Neu"]['GRA_Hauptschalt'])
+    ret.cruiseState.enabled = True if pt_cp.vl["Motor_2"]['GRA_Status'] in [1, 2] else False
 
     # Update ACC setpoint. When the setpoint reads as 255, the driver has not
     # yet established an ACC setpoint, so treat it as zero.
-    ret.cruiseState.speed = ext_cp.vl["ACC_GRA_Anziege"]["ACA_V_Wunsch"] * CV.KPH_TO_MS
+    # FIXME: for now this is the CC setpoint, the radar setpoint is in ACC_GRA_Anziege.ACA_V_Wunsch
+    ret.cruiseState.speed = pt_cp.vl["Motor_2"]['Soll_Geschwindigkeit_bei_GRA_Be'] * CV.KPH_TO_MS
     if ret.cruiseState.speed > 70:  # 255 kph in m/s == no current setpoint
       ret.cruiseState.speed = 0
 
@@ -416,6 +402,8 @@ class CarState(CarStateBase):
       ("GK1_Blinker_li", "Gate_Komf_1", 0),         # Left turn signal on
       ("GK1_Blinker_re", "Gate_Komf_1", 0),         # Right turn signal on
       ("Bremsinfo", "Kombi_1", 0),                  # Manual handbrake applied
+      ("GRA_Status", "Motor_2", 0),                 # ACC engagement status
+      ("Soll_Geschwindigkeit_bei_GRA_Be", "Motor_2", 0),  # FIXME: CC setpoint from ECU, does this work for ACC?
       ("GRA_Hauptschalt", "GRA_Neu", 0),            # ACC button, on/off
       ("GRA_Abbrechen", "GRA_Neu", 0),              # ACC button, cancel
       ("GRA_Neu_Setzen", "GRA_Neu", 0),             # ACC button, set
@@ -455,8 +443,8 @@ class CarState(CarStateBase):
 
     if CP.networkLocation == NetworkLocation.fwdCamera:
       # Extended CAN devices other than the camera are here on CANBUS.pt
-      signals += PqExtraSignals.fwd_radar_signals
-      checks += PqExtraSignals.fwd_radar_checks
+      #signals += PqExtraSignals.fwd_radar_signals
+      #checks += PqExtraSignals.fwd_radar_checks
       if CP.enableBsm:
         signals += PqExtraSignals.bsm_radar_signals
         checks += PqExtraSignals.bsm_radar_checks
@@ -506,8 +494,8 @@ class CarState(CarStateBase):
 
     if CP.networkLocation == NetworkLocation.gateway:
       # Extended CAN devices other than the camera are here on CANBUS.cam
-      signals += PqExtraSignals.fwd_radar_signals
-      checks += PqExtraSignals.fwd_radar_checks
+      #signals += PqExtraSignals.fwd_radar_signals
+      #checks += PqExtraSignals.fwd_radar_checks
       if CP.enableBsm:
         signals += PqExtraSignals.bsm_radar_signals
         checks += PqExtraSignals.bsm_radar_checks
