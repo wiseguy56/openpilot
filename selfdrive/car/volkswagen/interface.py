@@ -46,7 +46,7 @@ class CarInterface(CarInterfaceBase):
     else:  # pylint: disable=using-constant-test
       # Set global MQB parameters
       ret.safetyModel = car.CarParams.SafetyModel.volkswagen
-      ret.steerActuatorDelay = 0.05
+      ret.enableBsm = 0x30F in fingerprint[0]
 
       if 0xAD in fingerprint[0]:
         # Getriebe_11 detected: traditional automatic or DSG gearbox
