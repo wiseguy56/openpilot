@@ -169,10 +169,15 @@ class CarState(CarStateBase):
   def update_pq(self, pt_cp, cam_cp, ext_cp, trans_type):
     ret = car.CarState.new_message()
     # Update vehicle speed and acceleration from ABS wheel speeds.
-    ret.wheelSpeeds.fl = pt_cp.vl["Bremse_3"]["Radgeschw__VL_4_1"] * CV.KPH_TO_MS
-    ret.wheelSpeeds.fr = pt_cp.vl["Bremse_3"]["Radgeschw__VR_4_1"] * CV.KPH_TO_MS
-    ret.wheelSpeeds.rl = pt_cp.vl["Bremse_3"]["Radgeschw__HL_4_1"] * CV.KPH_TO_MS
-    ret.wheelSpeeds.rr = pt_cp.vl["Bremse_3"]["Radgeschw__HR_4_1"] * CV.KPH_TO_MS
+    #ret.wheelSpeeds.fl = pt_cp.vl["Bremse_3"]["Radgeschw__VL_4_1"] * CV.KPH_TO_MS
+    #ret.wheelSpeeds.fr = pt_cp.vl["Bremse_3"]["Radgeschw__VR_4_1"] * CV.KPH_TO_MS
+    #ret.wheelSpeeds.rl = pt_cp.vl["Bremse_3"]["Radgeschw__HL_4_1"] * CV.KPH_TO_MS
+    #ret.wheelSpeeds.rr = pt_cp.vl["Bremse_3"]["Radgeschw__HR_4_1"] * CV.KPH_TO_MS
+    # NSF is missing wheel speeds, test haxing around
+    ret.wheelSpeeds.fl = 16.6
+    ret.wheelSpeeds.fr = 16.6
+    ret.wheelSpeeds.rl = 16.6
+    ret.wheelSpeeds.rr = 16.6
 
     ret.vEgoRaw = float(np.mean([ret.wheelSpeeds.fl, ret.wheelSpeeds.fr, ret.wheelSpeeds.rl, ret.wheelSpeeds.rr]))
     ret.vEgo, ret.aEgo = self.update_speed_kf(ret.vEgoRaw)
@@ -244,8 +249,9 @@ class CarState(CarStateBase):
     # TODO: Consume FCW/AEB data from factory radar, if present
 
     # Update ACC radar status.
-    ret.cruiseState.available = bool(pt_cp.vl["GRA_Neu"]['GRA_Hauptschalt'])
+    #ret.cruiseState.available = bool(pt_cp.vl["GRA_Neu"]['GRA_Hauptschalt'])
     ret.cruiseState.enabled = True if pt_cp.vl["Motor_2"]['GRA_Status'] in [1, 2] else False
+    ret.cruiseState.available = ret.cruiseState.enabled  # Test hax for e-up!
 
     # Update ACC setpoint. When the setpoint reads as 255, the driver has not
     # yet established an ACC setpoint, so treat it as zero.
@@ -382,10 +388,10 @@ class CarState(CarStateBase):
       ("LH2_Sta_HCA", "Lenkhilfe_2", 0),            # Steering rack HCA status
       ("Lenkradwinkel_Geschwindigkeit", "Lenkwinkel_1", 0),  # Absolute steering rate
       ("Lenkradwinkel_Geschwindigkeit_S", "Lenkwinkel_1", 0),  # Steering rate sign
-      ("Radgeschw__VL_4_1", "Bremse_3", 0),         # ABS wheel speed, front left
-      ("Radgeschw__VR_4_1", "Bremse_3", 0),         # ABS wheel speed, front right
-      ("Radgeschw__HL_4_1", "Bremse_3", 0),         # ABS wheel speed, rear left
-      ("Radgeschw__HR_4_1", "Bremse_3", 0),         # ABS wheel speed, rear right
+      #("Radgeschw__VL_4_1", "Bremse_3", 0),         # ABS wheel speed, front left
+      #("Radgeschw__VR_4_1", "Bremse_3", 0),         # ABS wheel speed, front right
+      #("Radgeschw__HL_4_1", "Bremse_3", 0),         # ABS wheel speed, rear left
+      #("Radgeschw__HR_4_1", "Bremse_3", 0),         # ABS wheel speed, rear right
       ("Giergeschwindigkeit", "Bremse_5", 0),       # Absolute yaw rate
       ("Vorzeichen_der_Giergeschwindigk", "Bremse_5", 0),  # Yaw rate sign
       ("Gurtschalter_Fahrer", "Airbag_1", 0),       # Seatbelt status, driver
@@ -420,13 +426,13 @@ class CarState(CarStateBase):
     checks = [
       # sig_address, frequency
       ("Bremse_1", 100),          # From J104 ABS/ESP controller
-      ("Bremse_3", 100),          # From J104 ABS/ESP controller
+      #("Bremse_3", 100),          # From J104 ABS/ESP controller
       ("Lenkhilfe_3", 100),       # From J500 Steering Assist with integrated sensors
       ("Lenkwinkel_1", 100),      # From J500 Steering Assist with integrated sensors
       ("Motor_3", 100),           # From J623 Engine control module
       ("Airbag_1", 50),           # From J234 Airbag control module
       ("Bremse_5", 50),           # From J104 ABS/ESP controller
-      ("GRA_Neu", 50),            # From J??? steering wheel control buttons
+      #("GRA_Neu", 50),            # From J??? steering wheel control buttons -- haxed out to test e-up!
       ("Kombi_1", 50),            # From J285 Instrument cluster
       ("Motor_2", 50),            # From J623 Engine control module
       ("Lenkhilfe_2", 20),        # From J500 Steering Assist with integrated sensors
@@ -449,7 +455,7 @@ class CarState(CarStateBase):
         signals += PqExtraSignals.bsm_radar_signals
         checks += PqExtraSignals.bsm_radar_checks
 
-    return CANParser(DBC_FILES.pq, signals, checks, CANBUS.pt)
+    return CANParser(DBC_FILES.pq, signals, checks, CANBUS.pt, enforce_checks=False)
 
   @staticmethod
   def get_mqb_cam_can_parser(CP):
