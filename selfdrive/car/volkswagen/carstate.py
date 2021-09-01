@@ -173,13 +173,10 @@ class CarState(CarStateBase):
     #ret.wheelSpeeds.fr = pt_cp.vl["Bremse_3"]["Radgeschw__VR_4_1"] * CV.KPH_TO_MS
     #ret.wheelSpeeds.rl = pt_cp.vl["Bremse_3"]["Radgeschw__HL_4_1"] * CV.KPH_TO_MS
     #ret.wheelSpeeds.rr = pt_cp.vl["Bremse_3"]["Radgeschw__HR_4_1"] * CV.KPH_TO_MS
-    # NSF is missing wheel speeds, test haxing around
-    ret.wheelSpeeds.fl = 16.6
-    ret.wheelSpeeds.fr = 16.6
-    ret.wheelSpeeds.rl = 16.6
-    ret.wheelSpeeds.rr = 16.6
 
-    ret.vEgoRaw = float(np.mean([ret.wheelSpeeds.fl, ret.wheelSpeeds.fr, ret.wheelSpeeds.rl, ret.wheelSpeeds.rr]))
+    #ret.vEgoRaw = float(np.mean([ret.wheelSpeeds.fl, ret.wheelSpeeds.fr, ret.wheelSpeeds.rl, ret.wheelSpeeds.rr]))
+    # NSF is missing wheel speeds, test haxing around
+    ret.vEgoRaw = pt_cp.vl["Bremse_1"]["Geschwindigkeit_neu__Bremse_1_"]
     ret.vEgo, ret.aEgo = self.update_speed_kf(ret.vEgoRaw)
 
     ret.standstill = ret.vEgoRaw < 0.1
@@ -204,15 +201,16 @@ class CarState(CarStateBase):
     ret.brakePressed = bool(pt_cp.vl["Motor_2"]["Bremstestschalter"])
 
     # Update gear and/or clutch position data.
-    if trans_type == TransmissionType.automatic:
-      ret.gearShifter = self.parse_gear_shifter(self.shifter_values.get(pt_cp.vl["Getriebe_1"]["Waehlhebelposition__Getriebe_1_"], None))
-    elif trans_type == TransmissionType.manual:
-      ret.clutchPressed = not pt_cp.vl["Motor_1"]["Kupplungsschalter"]
-      reverse_light = bool(pt_cp.vl["Gate_Komf_1"]["GK1_Rueckfahr"])
-      if reverse_light:
-        ret.gearShifter = GearShifter.reverse
-      else:
-        ret.gearShifter = GearShifter.drive
+    #if trans_type == TransmissionType.automatic:
+    #  ret.gearShifter = self.parse_gear_shifter(self.shifter_values.get(pt_cp.vl["Getriebe_1"]["Waehlhebelposition__Getriebe_1_"], None))
+    #elif trans_type == TransmissionType.manual:
+    #  ret.clutchPressed = not pt_cp.vl["Motor_1"]["Kupplungsschalter"]
+    #  reverse_light = bool(pt_cp.vl["Gate_Komf_1"]["GK1_Rueckfahr"])
+    #  if reverse_light:
+    #    ret.gearShifter = GearShifter.reverse
+    #  else:
+    #    ret.gearShifter = GearShifter.drive
+    ret.gearShifter = GearShifter.drive
 
     # Update door and trunk/hatch lid open status.
     # TODO: need to locate signals for other three doors if possible
@@ -392,6 +390,7 @@ class CarState(CarStateBase):
       #("Radgeschw__VR_4_1", "Bremse_3", 0),         # ABS wheel speed, front right
       #("Radgeschw__HL_4_1", "Bremse_3", 0),         # ABS wheel speed, rear left
       #("Radgeschw__HR_4_1", "Bremse_3", 0),         # ABS wheel speed, rear right
+      ("Geschwindigkeit_neu__Bremse_1_", "Bremse_1", 0),  # ABS wheel speed test for e-up!
       ("Giergeschwindigkeit", "Bremse_5", 0),       # Absolute yaw rate
       ("Vorzeichen_der_Giergeschwindigk", "Bremse_5", 0),  # Yaw rate sign
       ("Gurtschalter_Fahrer", "Airbag_1", 0),       # Seatbelt status, driver
