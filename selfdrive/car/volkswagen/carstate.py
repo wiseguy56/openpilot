@@ -27,7 +27,7 @@ class CarState(CarStateBase):
 
     ret.vEgoRaw = float(np.mean([ret.wheelSpeeds.fl, ret.wheelSpeeds.fr, ret.wheelSpeeds.rl, ret.wheelSpeeds.rr]))
     ret.vEgo, ret.aEgo = self.update_speed_kf(ret.vEgoRaw)
-    ret.standstill = pt_cp.vl["ESP_21"]["ESP_Haltebestaetigung"]
+    ret.standstill = bool(pt_cp.vl["ESP_21"]["ESP_Haltebestaetigung"])
 
     # Update steering angle, rate, yaw rate, and driver input torque. VW send
     # the sign/direction in a separate signal so they must be recombined.
