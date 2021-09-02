@@ -27,8 +27,7 @@ class CarState(CarStateBase):
 
     ret.vEgoRaw = float(np.mean([ret.wheelSpeeds.fl, ret.wheelSpeeds.fr, ret.wheelSpeeds.rl, ret.wheelSpeeds.rr]))
     ret.vEgo, ret.aEgo = self.update_speed_kf(ret.vEgoRaw)
-
-    ret.standstill = ret.vEgoRaw < 0.1
+    ret.standstill = pt_cp.vl["ESP_21"]["ESP_Haltebestaetigung"]
 
     # Update steering angle, rate, yaw rate, and driver input torque. VW send
     # the sign/direction in a separate signal so they must be recombined.
@@ -48,7 +47,6 @@ class CarState(CarStateBase):
     ret.gasPressed = ret.gas > 0
     ret.brake = pt_cp.vl["ESP_05"]["ESP_Bremsdruck"] / 250.0  # FIXME: this is pressure in Bar, not sure what OP expects
     ret.brakePressed = bool(pt_cp.vl["ESP_05"]["ESP_Fahrer_bremst"])
-    self.esp_hold_confirmation = pt_cp.vl["ESP_21"]["ESP_Haltebestaetigung"]
 
     # Update gear and/or clutch position data.
     if trans_type == TransmissionType.automatic:
