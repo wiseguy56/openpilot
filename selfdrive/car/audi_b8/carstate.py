@@ -191,7 +191,7 @@ class CarState(CarStateBase):
       ("Gateway", 5),       # From J533 CAN gateway (aggregated data)
       ("Airbag_02", 5),     # From J234 Airbag control module
       ("Kombi_01", 20),     # From J285 Instrument cluster
-      ("Blinkmodi_01", 2),  # From J519 BCM (sent at 1Hz when no lights active, 50Hz when active)
+      ("Blinkmodi_01", 0),  # From J519 BCM (sent at 1Hz when no lights active, 50Hz when active)
     ]
 
 #    if CP.transmissionType == TransmissionType.automatic:
