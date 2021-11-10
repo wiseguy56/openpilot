@@ -1,15 +1,18 @@
 [submodule "panda"]
 	path = panda
 	url = https://github.com/SBieger/panda.git
+	branch = audi_b8
 [submodule "opendbc"]
 	path = opendbc
 	url = https://github.com/SBieger/opendbc.git
+	branch = audi_b8
 [submodule "laika_repo"]
 	path = laika_repo
 	url = https://github.com/commaai/laika.git
 [submodule "cereal"]
 	path = cereal
 	url = https://github.com/SBieger/cereal.git
+	branch = audi_b8
 [submodule "rednose_repo"]
 	path = rednose_repo
 	url = https://github.com/commaai/rednose.git
