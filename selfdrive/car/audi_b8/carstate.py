@@ -10,8 +10,8 @@ class CarState(CarStateBase):
   def __init__(self, CP):
     super().__init__(CP)
     can_define = CANDefine(DBC_FILES.audi_b8)
-#    self.shifter_values = can_define.dv["Getriebe_11"]["GE_Fahrstufe"]
-#    self.hca_status_values = can_define.dv["LH_EPS_03"]["EPS_HCA_Status"]
+    self.shifter_values = can_define.dv["TSK_01"]["GearPosition"]
+    self.hca_status_values = can_define.dv["LH_EPS_03"]["EPS_HCA_Status"]
     self.buttonStates = BUTTON_STATES.copy()
 
   def update(self, pt_cp, cam_cp, ext_cp, trans_type):
@@ -24,7 +24,7 @@ class CarState(CarStateBase):
 
     ret.vEgoRaw = float(np.mean([ret.wheelSpeeds.fl, ret.wheelSpeeds.fr, ret.wheelSpeeds.rl, ret.wheelSpeeds.rr]))
     ret.vEgo, ret.aEgo = self.update_speed_kf(ret.vEgoRaw)
-#    ret.standstill = bool(pt_cp.vl["ESP_21"]["ESP_Haltebestaetigung"])
+    ret.standstill = ret.vEgoRaw < 0.1
 
     # Update steering angle, rate, yaw rate, and driver input torque. VW send
     # the sign/direction in a separate signal so they must be recombined.
@@ -35,9 +35,9 @@ class CarState(CarStateBase):
     ret.yawRate = pt_cp.vl["ESP_02"]["ESP_Gierrate"] * (1, -1)[int(pt_cp.vl["ESP_02"]["ESP_VZ_Gierrate"])] * CV.DEG_TO_RAD
 
     # Verify EPS readiness to accept steering commands
-#    hca_status = self.hca_status_values.get(pt_cp.vl["LH_EPS_03"]["EPS_HCA_Status"])
-#    ret.steerError = hca_status in ["DISABLED", "FAULT"]
-#    ret.steerWarning = hca_status in ["INITIALIZING", "REJECTED"]
+    hca_status = self.hca_status_values.get(pt_cp.vl["LH_EPS_03"]["EPS_HCA_Status"])
+    ret.steerError = hca_status in ["DISABLED", "FAULT"]
+    ret.steerWarning = hca_status in ["INITIALIZING", "REJECTED"]
 
     # Update gas, brakes, and gearshift.
     ret.gas = pt_cp.vl["Motor_03"]["MO_Fahrpedalrohwert_01"] / 100.0
@@ -49,7 +49,10 @@ class CarState(CarStateBase):
 #    if trans_type == TransmissionType.automatic:
 #      ret.gearShifter = self.parse_gear_shifter(self.shifter_values.get(pt_cp.vl["Getriebe_11"]["GE_Fahrstufe"], None))
 #    elif trans_type == TransmissionType.direct:
-#      ret.gearShifter = self.parse_gear_shifter(self.shifter_values.get(pt_cp.vl["EV_Gearshift"]["GearPosition"], None))
+    if bool(pt_cp.vl["Gateway"]["BCM1_Rueckfahrlicht_Schalter"]):
+      ret.gearShifter = GearShifter.reverse
+    else:
+      ret.gearShifter = self.parse_gear_shifter(self.shifter_values.get(pt_cp.vl["TSK_01"]["GearPosition"], None))
 #    elif trans_type == TransmissionType.manual:
 #      ret.clutchPressed = not pt_cp.vl["Motor_14"]["MO_Kuppl_schalter"]
 #      if bool(pt_cp.vl["Gateway_72"]["BCM1_Rueckfahrlicht_Schalter"]):
@@ -103,8 +106,8 @@ class CarState(CarStateBase):
 
     # Update ACC setpoint. When the setpoint is zero or there's an error, the
     # radar sends a set-speed of ~90.69 m/s / 203mph.
-#    ret.cruiseState.speed = ext_cp.vl["ACC_02"]["ACC_Wunschgeschw"] * CV.KPH_TO_MS
-#    if ret.cruiseState.speed > 90:
+    ret.cruiseState.speed = ext_cp.vl["ACC_02"]["ACC_Wunschgeschw"] * CV.KPH_TO_MS
+    if ret.cruiseState.speed > 90:
       ret.cruiseState.speed = 0
 
     # Update control button states for turn signals and ACC controls.
@@ -142,7 +145,7 @@ class CarState(CarStateBase):
       ("LWI_Lenkradw_Geschw", "LWI_01", 0),         # Absolute steering rate
       ("LWI_VZ_Lenkradw_Geschw", "LWI_01", 0),      # Steering rate sign
       ("EPS_Berechneter_LW", "LH_EPS_03", 0),       # Absolute steering angle
-#      ("EPS_HCA_Status", "LH_EPS_03", 3),           # EPS HCA control status
+      ("EPS_HCA_Status", "LH_EPS_03", 3),           # EPS HCA control status
       ("EPS_Lenkmoment", "LH_EPS_03", 0),           # Absolute driver torque input
       ("EPS_VZ_BLW", "LH_EPS_03", 0),               # Steering angle sign
       ("EPS_VZ_Lenkmoment", "LH_EPS_03", 0),        # Driver torque input sign
@@ -198,8 +201,9 @@ class CarState(CarStateBase):
 #      signals += [("GE_Fahrstufe", "Getriebe_11", 0)]  # Auto trans gear selector position
 #      checks += [("Getriebe_11", 20)]  # From J743 Auto transmission control module
 #    elif CP.transmissionType == TransmissionType.direct:
-#      signals += [("GearPosition", "EV_Gearshift", 0)]  # EV gear selector position
-#      checks += [("EV_Gearshift", 10)]  # From J??? unknown EV control module
+    signals += [("GearPosition", "TSK_01", 0),  # EV gear selector position
+                ("BCM1_Rueckfahrlicht_Schalter", "Gateway", 0)]  # Reverse light from BCM
+    checks += [("TSK_01", 10)]  # From J??? unknown EV control module
 #    elif CP.transmissionType == TransmissionType.manual:
 #      signals += [("MO_Kuppl_schalter", "Motor_14", 0),  # Clutch switch
 #                  ("BCM1_Rueckfahrlicht_Schalter", "Gateway_72", 0)]  # Reverse light from BCM
@@ -247,14 +251,14 @@ class CarState(CarStateBase):
 class MqbExtraSignals:
   # Additional signal and message lists for optional or bus-portable controllers
   fwd_radar_signals = [
-#    ("ACC_Wunschgeschw", "ACC_02", 0),              # ACC set speed
+    ("ACC_Wunschgeschw", "ACC_02", 0),              # ACC set speed
 #    ("AWV2_Freigabe", "ACC_10", 0),                 # FCW brake jerk release
 #    ("ANB_Teilbremsung_Freigabe", "ACC_10", 0),     # AEB partial braking release
 #    ("ANB_Zielbremsung_Freigabe", "ACC_10", 0),     # AEB target braking release
   ]
   fwd_radar_checks = [
 #    ("ACC_10", 50),                                 # From J428 ACC radar control module
-#    ("ACC_02", 17),                                 # From J428 ACC radar control module
+    ("ACC_02", 17),                                 # From J428 ACC radar control module
   ]
   bsm_radar_signals = [
 #    ("SWA_Infostufe_SWA_li", "SWA_01", 0),          # Blind spot object info, left

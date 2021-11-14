@@ -30,7 +30,7 @@ class CarInterface(CarInterfaceBase):
       ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.audiB8)]
       ret.enableBsm = 0x30F in fingerprint[0]  # SWA_01
 
-      ret.transmissionType = TransmissionType.automatic
+      ret.transmissionType = TransmissionType.direct
       ret.networkLocation = NetworkLocation.gateway
 
     # Global tuning defaults, can be overridden per-vehicle
