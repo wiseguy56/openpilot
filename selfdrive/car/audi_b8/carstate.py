@@ -91,18 +91,18 @@ class CarState(CarStateBase):
 
     # Update ACC radar status.
     accStatus = pt_cp.vl["TSK_02"]["TSK_Status_GRA_ACC_01"]
-    if accStatus == 2:
+    if accStatus == 0:
       # ACC okay and enabled, but not currently engaged
       ret.cruiseState.available = True
       ret.cruiseState.enabled = False
-    elif accStatus in [3, 4, 5]:
+    else:
       # ACC okay and enabled, currently engaged and regulating speed (3) or engaged with driver accelerating (4) or overrun (5)
       ret.cruiseState.available = True
       ret.cruiseState.enabled = True
-    else:
-      # ACC okay but disabled (1), or a radar visibility or other fault/disruption (6 or 7)
-      ret.cruiseState.available = False
-      ret.cruiseState.enabled = False
+#    else:
+#      # ACC okay but disabled (1), or a radar visibility or other fault/disruption (6 or 7)
+#      ret.cruiseState.available = False
+#      ret.cruiseState.enabled = False
 
     # Update ACC setpoint. When the setpoint is zero or there's an error, the
     # radar sends a set-speed of ~90.69 m/s / 203mph.
