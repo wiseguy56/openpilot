@@ -93,7 +93,7 @@ def create_mqb_acc_07_control(packer, bus, enabled, accel, secondary_accel, acc_
     "ACC_Freewheel_Type": 2 if enabled else 0,
     "ACC_Hold_Type": acc_hold_type,
     "ACC_Hold_Release": acc_hold_release,
-    "ACC_Accel_Secondary": secondary_accel+0.01 if enabled else 3.03,  # FIXME: think there are rounding/scaling issues here
+    "ACC_Accel_Secondary": 3.03,  # FIXME: do we really need this? may be doing more harm than good, until we understand it.
     "ACC_Accel_TSK": accel if enabled else 3.01,
   }
 
