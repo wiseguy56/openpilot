@@ -61,14 +61,13 @@ class CarInterface(CarInterfaceBase):
     ret.lateralTuning.pid.kiBP = [0.]
     ret.lateralTuning.pid.kf = 0.00014
     ret.lateralTuning.pid.kpV = [0.4]
-    ret.lateralTuning.pid.kiV = [0.0]
+    ret.lateralTuning.pid.kiV = [0.03]
 
     # Global longitudinal tuning defaults, can be overridden per-vehicle
 
     ret.pcmCruise = not ret.openpilotLongitudinalControl
     ret.longitudinalActuatorDelayUpperBound = 1.0  # s
     ret.stoppingControl = True
-    ret.minSpeedCan = 0.0
     ret.vEgoStopping = 0.4
     ret.vEgoStarting = 0.5
     ret.startAccel = 0.5
