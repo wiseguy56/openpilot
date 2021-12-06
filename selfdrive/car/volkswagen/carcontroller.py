@@ -84,7 +84,7 @@ class CarController():
         can_sends.append(volkswagencan.create_mqb_acc_04_control(self.packer_pt, CANBUS.pt, CS.acc_04_stock_values,
                                                                  idx))
         can_sends.append(volkswagencan.create_mqb_acc_13_control(self.packer_pt, CANBUS.pt, enabled,
-                                                                 CS.acc_13_stock_values, idx))
+                                                                 CS.acc_13_stock_values))
 
     # **** Steering Controls ************************************************ #
 
