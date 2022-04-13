@@ -52,14 +52,9 @@ class CAR:
 
 # Control units on Extended CAN did not respond to UDS requests, so FW_VERSIONS could
 # not be requested... using fingerprinting instead
-#
-# PLEASE DO NOT CONNECT PANDA TO THE CONVENIENCE CAN OF THE AUDI A5.
-# The convenince CAN is not a high speed CAN with 500 kbps, instead it is a fault-
-# tolerant CAN with only 100 kbps. If Panda gets connected, it will disturb the
-# convenience CAN. So please, just connect Panda to the Extended CAN only.
 
 FINGERPRINTS = {
   CAR.AUDI_A5_B8: [{
-    64: 8, 134: 8, 159: 8, 256: 8, 257: 8, 259: 8, 260: 8, 261: 8, 262: 8, 264: 8, 265: 8, 266: 8, 267: 4, 268: 8, 279: 8, 286: 8, 294: 8, 523: 7, 543: 7, 776: 8, 778: 8, 779: 8, 780: 8, 782: 8, 785: 4, 810: 8, 901: 8, 914: 8, 919: 8, 959: 8, 960: 4, 994: 8, 1195: 1, 1215: 1, 1312: 8, 1318: 8, 1413: 8, 1440: 5, 1520: 5, 1536: 2, 1595: 3, 1596: 3, 1597: 8, 1605: 8, 1714: 8, 1716: 8, 1720: 8
+    64: 8, 134: 8, 159: 8, 256: 8, 257: 8, 259: 8, 260: 8, 261: 8, 262: 8, 264: 8, 265: 8, 266: 8, 267: 4, 268: 8, 279: 8, 286: 8, 294: 8, 776: 8, 778: 8, 779: 8, 780: 8, 782: 8, 785: 4, 810: 8, 901: 8, 914: 8, 919: 8, 959: 8, 960: 4, 994: 8, 1312: 8, 1318: 8, 1413: 8, 1440: 5, 1520: 5, 1605: 8, 1714: 8, 1716: 8, 1720: 8
   }],
 }
