@@ -1,3 +1,9 @@
+This is a fork of Openpilot to make it work in the Audi S5 B8.5.
+Additionally I changed the following:
+* Disable warning for missing GPS signal
+* Read current time from CAN bus to set Android system time
+* Disable the transceiver for the Convenience CAN of the Panda
+
 ![](https://user-images.githubusercontent.com/37757984/127420744-89ca219c-8f8e-46d3-bccf-c1cb53b81bb1.png)
 
 Table of Contents
