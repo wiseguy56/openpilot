@@ -1,6 +1,6 @@
 from collections import defaultdict, namedtuple
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, IntFlag
 from typing import Dict, List, Union
 
 from cereal import car
@@ -37,6 +37,10 @@ class CANBUS:
 
 class DBC_FILES:
   mqb = "vw_mqb_2010"  # Used for all cars with MQB-style CAN messaging
+
+
+class VolkswagenFlags(IntFlag):
+  PP_CAR = 1
 
 
 DBC: Dict[str, Dict[str, str]] = defaultdict(lambda: dbc_dict(DBC_FILES.mqb, None))

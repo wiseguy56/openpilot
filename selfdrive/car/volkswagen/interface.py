@@ -1,5 +1,5 @@
 from cereal import car
-from selfdrive.car.volkswagen.values import CAR, CANBUS, NetworkLocation, TransmissionType, GearShifter
+from selfdrive.car.volkswagen.values import CAR, CANBUS, NetworkLocation, TransmissionType, GearShifter, VolkswagenFlags
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint, get_safety_config
 from selfdrive.car.interfaces import CarInterfaceBase
 
@@ -39,6 +39,10 @@ class CarInterface(CarInterfaceBase):
         ret.networkLocation = NetworkLocation.gateway
       else:
         ret.networkLocation = NetworkLocation.fwdCamera
+
+      if car_fw is not None:
+        if not any(fw.ecu == 'fwdRadar' for fw in car_fw):
+          ret.flags |= VolkswagenFlags.PP_CAR.value
 
     # Global lateral tuning defaults, can be overridden per-vehicle
 
