@@ -129,8 +129,11 @@ FW_VERSIONS = {
     (Ecu.esp, 0x747, None): [
       b'68306178AD',
     ],
-    (Ecu.fwdCamera, 0x753, None): [
+    (Ecu.fwdRadar, 0x753, None): [
       b'68332015AB',
+    ],
+    (Ecu.fwdCamera, 0x764, None): [
+      b'68231909AC',  # temp test
     ],
     (Ecu.eps, 0x75A, None): [
       b'68321644AC',
@@ -162,7 +165,7 @@ FW_VERSIONS = {
       b'68535469AB',
       b'68438454AC',
     ],
-    (Ecu.fwdCamera, 0x753, None): [
+    (Ecu.fwdRadar, 0x753, None): [
       b'68320950AL',
       b'68320950AJ',
       b'68454268AB',
