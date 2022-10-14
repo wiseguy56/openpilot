@@ -325,7 +325,8 @@ def thermald_thread():
 
     # Show update prompt
     try:
-      last_update = datetime.datetime.fromisoformat(params.get("LastUpdateTime", encoding='utf8'))
+#     last_update = datetime.datetime.fromisoformat(params.get("LastUpdateTime", encoding='utf8'))
+      last_update = now
     except (TypeError, ValueError):
       last_update = now
     dt = now - last_update
