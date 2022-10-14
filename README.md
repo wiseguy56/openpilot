@@ -5,10 +5,10 @@ Additionally I changed the following:
 * Disable the transceiver for the Convenience CAN of the Panda
 * Disable forced update when software is outdated
 
-To clone this fork:
-git clone https://github.com/SBieger/openpilot.git
-cd openpilot
-git submodule update --init
+To clone this fork:<br/>
+* git clone https://github.com/SBieger/openpilot.git
+* cd openpilot
+* git submodule update --init
 
 
 ![](https://user-images.githubusercontent.com/37757984/127420744-89ca219c-8f8e-46d3-bccf-c1cb53b81bb1.png)
