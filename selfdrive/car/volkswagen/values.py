@@ -1,6 +1,6 @@
 from collections import defaultdict, namedtuple
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, IntFlag
 from typing import Dict, List, Union
 
 from cereal import car
@@ -137,6 +137,10 @@ class CAR:
 
 
 PQ_CARS = {CAR.PASSAT_NMS, CAR.SHARAN_MK2}
+
+
+class VolkswagenFlags(IntFlag):
+  PP_CAR = 1
 
 
 DBC: Dict[str, Dict[str, str]] = defaultdict(lambda: dbc_dict("vw_mqb_2010", None))
@@ -384,6 +388,7 @@ FW_VERSIONS = {
       b'\xf1\x875G0906259Q \xf1\x890002',
       b'\xf1\x875G0906259Q \xf1\x892313',
       b'\xf1\x875G0906259T \xf1\x890003',
+      b'\xf1\x875G09C0BB01 \xf1\x890001',
       b'\xf1\x878V0906259H \xf1\x890002',
       b'\xf1\x878V0906259J \xf1\x890003',
       b'\xf1\x878V0906259K \xf1\x890001',
@@ -414,6 +419,7 @@ FW_VERSIONS = {
       b'\xf1\x870D9300014M \xf1\x895004',
       b'\xf1\x870D9300014Q \xf1\x895006',
       b'\xf1\x870D9300020J \xf1\x894902',
+      b'\xf1\x870D9300020L \xf1\x894902',
       b'\xf1\x870D9300020Q \xf1\x895201',
       b'\xf1\x870D9300020S \xf1\x895201',
       b'\xf1\x870D9300040A \xf1\x893613',
@@ -463,6 +469,7 @@ FW_VERSIONS = {
       b'\xf1\x873Q0909144J \xf1\x895063\xf1\x82\x0566A00514A1',
       b'\xf1\x873Q0909144J \xf1\x895063\xf1\x82\x0566A01613A1',
       b'\xf1\x873Q0909144J \xf1\x895063\xf1\x82\x0566A0J712A1',
+      b'\xf1\x873Q0909144K \xf1\x895072\xf1\x82\x0571A01615A1',
       b'\xf1\x873Q0909144K \xf1\x895072\xf1\x82\x0571A0J714A1',
       b'\xf1\x873Q0909144L \xf1\x895081\xf1\x82\x0571A0JA15A1',
       b'\xf1\x873Q0909144M \xf1\x895082\xf1\x82\x0571A01A18A1',
