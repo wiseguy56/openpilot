@@ -107,7 +107,7 @@ class CarState(CarStateBase):
     # braking release bits are set.
     # Refer to VW Self Study Program 890253: Volkswagen Driver Assistance
     # Systems, chapter on Front Assist with Braking: Golf Family for all MQB
-    if self.CP.flags & VolkswagenFlags.HAS_RADAR:
+    if self.CP.flags & VolkswagenFlags.HAS_FWDRADAR:
       ret.stockFcw = bool(ext_cp.vl["ACC_10"]["AWV2_Freigabe"])
       ret.stockAeb = bool(ext_cp.vl["ACC_10"]["ANB_Teilbremsung_Freigabe"]) or bool(ext_cp.vl["ACC_10"]["ANB_Zielbremsung_Freigabe"])
 
@@ -142,7 +142,7 @@ class CarState(CarStateBase):
     ret.accFaultedTemp = pt_cp.vl["TSK_06"]["TSK_Status"] == 6
 
     # Update stock ACC data as applicable
-    if self.CP.pcmCruise and self.CP.flags & VolkswagenFlags.HAS_RADAR:
+    if self.CP.pcmCruise and self.CP.flags & VolkswagenFlags.HAS_FWDRADAR:
       ret.accFaulted |= ext_cp.vl["ACC_06"]["ACC_Status_ACC"] == 7
       ret.accFaultedTemp |= ext_cp.vl["ACC_06"]["ACC_Status_ACC"] == 6
       ret.cruiseState.speed = ext_cp.vl["ACC_02"]["ACC_Wunschgeschw_02"] * CV.KPH_TO_MS
@@ -190,7 +190,9 @@ class CarState(CarStateBase):
     ret.gasPressed = ret.gas > 0
     ret.brake = pt_cp.vl["Bremse_5"]["Bremsdruck"] / 250.0  # FIXME: this is pressure in Bar, not sure what OP expects
     ret.brakePressed = bool(pt_cp.vl["Motor_2"]["Bremslichtschalter"])
-    ret.parkingBrake = bool(pt_cp.vl["Kombi_1"]["Bremsinfo"])
+    hand_brake = bool(pt_cp.vl["Kombi_1"]["Bremsinfo"])
+    electric_parking_brake = pt_cp.vl["EPB_01"]["EPB_Status"] in (1, 2)
+    ret.parkingBrake = hand_brake or electric_parking_brake
 
     # Update gear and/or clutch position data.
     if trans_type == TransmissionType.automatic:
@@ -295,6 +297,7 @@ class CarState(CarStateBase):
       ("ESP_Tastung_passiv", "ESP_21"),          # Stability control disabled
       ("ESP_Haltebestaetigung", "ESP_21"),       # ESP hold confirmation
       ("KBI_Handbremse", "Kombi_01"),            # Manual handbrake applied
+      ("EPB_Status", "EPB_01"),                  # Electric parking brake status
       ("TSK_Status", "TSK_06"),                  # ACC engagement status from drivetrain coordinator
       ("GRA_Hauptschalter", "GRA_ACC_01"),       # ACC button, on/off
       ("GRA_Abbrechen", "GRA_ACC_01"),           # ACC button, cancel
@@ -316,6 +319,7 @@ class CarState(CarStateBase):
       ("LWI_01", 100),      # From J500 Steering Assist with integrated sensors
       ("LH_EPS_03", 100),   # From J500 Steering Assist with integrated sensors
       ("ESP_19", 100),      # From J104 ABS/ESP controller
+      ("EPB_01", 50),       # From J104 ABS/ESP controller
       ("ESP_05", 50),       # From J104 ABS/ESP controller
       ("ESP_21", 50),       # From J104 ABS/ESP controller
       ("Motor_20", 50),     # From J623 Engine control module
@@ -341,7 +345,7 @@ class CarState(CarStateBase):
 
     if CP.networkLocation == NetworkLocation.fwdCamera:
       # Radars are here on CANBUS.pt
-      if CP.flags & VolkswagenFlags.HAS_RADAR:
+      if CP.flags & VolkswagenFlags.HAS_FWDRADAR:
         signals += MqbExtraSignals.fwd_radar_signals
         checks += MqbExtraSignals.fwd_radar_checks
       if CP.enableBsm:
@@ -373,7 +377,7 @@ class CarState(CarStateBase):
       ]
     else:
       # Radars are here on CANBUS.cam
-      if CP.flags & VolkswagenFlags.HAS_RADAR:
+      if CP.flags & VolkswagenFlags.HAS_FWDRADAR:
         signals += MqbExtraSignals.fwd_radar_signals
         checks += MqbExtraSignals.fwd_radar_checks
       if CP.enableBsm:

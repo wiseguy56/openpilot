@@ -69,7 +69,10 @@ class CarInterface(CarInterfaceBase):
         ret.networkLocation = NetworkLocation.fwdCamera
 
       if any(msg in fingerprint[0] for msg in (0x122, 0x12e)) or use_off_car_defaults:  # ACC_06, ACC_07
-        ret.flags |= VolkswagenFlags.HAS_RADAR.value
+        ret.flags |= VolkswagenFlags.HAS_FWDRADAR.value
+
+      if 0x104 in fingerprint[0]:  # EPB_01
+        ret.flags |= VolkswagenFlags.HAS_EPB.value
 
     # Global lateral tuning defaults, can be overridden per-vehicle
 

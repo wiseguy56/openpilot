@@ -104,8 +104,8 @@ class CANBUS:
 
 
 class VolkswagenFlags(IntFlag):
-  HAS_RADAR = 1
-
+  HAS_FWDRADAR = 1
+  HAS_EPB = 2
 
 # Check the 7th and 8th characters of the VIN before adding a new CAR. If the
 # chassis code is already listed below, don't add a new CAR, just add to the
