@@ -139,13 +139,11 @@ class CarState(CarStateBase):
       ret.cruiseState.enabled = False
 
     ret.cruiseState.standstill = self.CP.pcmCruise and self.esp_hold_confirmation
-    ret.accFaulted = pt_cp.vl["TSK_06"]["TSK_Status"] == 7
-    ret.accFaultedTemp = pt_cp.vl["TSK_06"]["TSK_Status"] == 6
+    ret.accFaulted = pt_cp.vl["TSK_06"]["TSK_Status"] in (6, 7)
 
     # Update stock ACC data as applicable
     if self.CP.pcmCruise and self.CP.flags & VolkswagenFlags.HAS_FWDRADAR:
-      ret.accFaulted |= ext_cp.vl["ACC_06"]["ACC_Status_ACC"] == 7
-      ret.accFaultedTemp |= ext_cp.vl["ACC_06"]["ACC_Status_ACC"] == 6
+      ret.accFaulted |= ext_cp.vl["ACC_06"]["ACC_Status_ACC"] in (6, 7)
       ret.cruiseState.speed = ext_cp.vl["ACC_02"]["ACC_Wunschgeschw_02"] * CV.KPH_TO_MS
       if ret.cruiseState.speed > 90:
         ret.cruiseState.speed = 0
