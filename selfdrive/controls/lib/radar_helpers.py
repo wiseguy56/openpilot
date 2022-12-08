@@ -3,7 +3,7 @@ from common.kalman.simple_kalman import KF1D
 
 
 # Default lead acceleration decay set to 50% at 1s
-_LEAD_ACCEL_TAU = 1.5
+_LEAD_ACCEL_TAU = 0.3
 
 # Hack to maintain vision lead state
 _vision_lead_aTau = {0: _LEAD_ACCEL_TAU, 1: _LEAD_ACCEL_TAU}
