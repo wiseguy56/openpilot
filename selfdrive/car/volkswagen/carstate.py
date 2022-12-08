@@ -4,7 +4,7 @@ from common.conversions import Conversions as CV
 from selfdrive.car.interfaces import CarStateBase
 from opendbc.can.parser import CANParser
 from selfdrive.car.volkswagen.values import DBC, CANBUS, PQ_CARS, NetworkLocation, TransmissionType, GearShifter, \
-                                            CarControllerParams
+                                            CarControllerParams, VolkswagenFlags
 
 
 class CarState(CarStateBase):
@@ -13,6 +13,7 @@ class CarState(CarStateBase):
     self.CCP = CarControllerParams(CP)
     self.button_states = {button.event_type: False for button in self.CCP.BUTTONS}
     self.esp_hold_confirmation = False
+    self.acc_type = 0
 
   def create_button_events(self, pt_cp, buttons):
     button_events = []
@@ -58,7 +59,7 @@ class CarState(CarStateBase):
     ret.steerFaultPermanent = hca_status in ("DISABLED", "FAULT")
     ret.steerFaultTemporary = hca_status in ("INITIALIZING", "REJECTED")
 
-    # Update gas, brakes, and gearshift.
+    # Update gas and brakes
     ret.gas = pt_cp.vl["Motor_20"]["MO_Fahrpedalrohwert_01"] / 100.0
     ret.gasPressed = ret.gas > 0
     ret.brake = pt_cp.vl["ESP_05"]["ESP_Bremsdruck"] / 250.0  # FIXME: this is pressure in Bar, not sure what OP expects
@@ -66,8 +67,10 @@ class CarState(CarStateBase):
     brake_pressure_detected = bool(pt_cp.vl["ESP_05"]["ESP_Fahrer_bremst"])
     ret.brakePressed = brake_pedal_pressed or brake_pressure_detected
     ret.parkingBrake = bool(pt_cp.vl["Kombi_01"]["KBI_Handbremse"])  # FIXME: need to include an EPB check as well
+    ret.espDisabled = pt_cp.vl["ESP_21"]["ESP_Tastung_passiv"] != 0
+    self.esp_hold_confirmation = bool(pt_cp.vl["ESP_21"]["ESP_Haltebestaetigung"])
 
-    # Update gear and/or clutch position data.
+    # Update gear and/or clutch position data
     if trans_type == TransmissionType.automatic:
       ret.gearShifter = self.parse_gear_shifter(self.CCP.shifter_values.get(pt_cp.vl["Getriebe_11"]["GE_Fahrstufe"], None))
     elif trans_type == TransmissionType.direct:
@@ -79,17 +82,17 @@ class CarState(CarStateBase):
       else:
         ret.gearShifter = GearShifter.drive
 
-    # Update door and trunk/hatch lid open status.
+    # Update door and trunk/hatch lid open status
     ret.doorOpen = any([pt_cp.vl["Gateway_72"]["ZV_FT_offen"],
                         pt_cp.vl["Gateway_72"]["ZV_BT_offen"],
                         pt_cp.vl["Gateway_72"]["ZV_HFS_offen"],
                         pt_cp.vl["Gateway_72"]["ZV_HBFS_offen"],
                         pt_cp.vl["Gateway_72"]["ZV_HD_offen"]])
 
-    # Update seatbelt fastened status.
+    # Update seatbelt fastened status
     ret.seatbeltUnlatched = pt_cp.vl["Airbag_02"]["AB_Gurtschloss_FA"] != 3
 
-    # Consume blind-spot monitoring info/warning LED states, if available.
+    # Consume blind-spot monitoring info/warning LED states, if available
     # Infostufe: BSM LED on, Warnung: BSM LED flashing
     if self.CP.enableBsm:
       ret.leftBlindspot = bool(ext_cp.vl["SWA_01"]["SWA_Infostufe_SWA_li"]) or bool(ext_cp.vl["SWA_01"]["SWA_Warnung_SWA_li"])
@@ -104,11 +107,23 @@ class CarState(CarStateBase):
     # braking release bits are set.
     # Refer to VW Self Study Program 890253: Volkswagen Driver Assistance
     # Systems, chapter on Front Assist with Braking: Golf Family for all MQB
-    ret.stockFcw = bool(ext_cp.vl["ACC_10"]["AWV2_Freigabe"])
-    ret.stockAeb = bool(ext_cp.vl["ACC_10"]["ANB_Teilbremsung_Freigabe"]) or bool(ext_cp.vl["ACC_10"]["ANB_Zielbremsung_Freigabe"])
+    if self.CP.flags & VolkswagenFlags.HAS_RADAR:
+      ret.stockFcw = bool(ext_cp.vl["ACC_10"]["AWV2_Freigabe"])
+      ret.stockAeb = bool(ext_cp.vl["ACC_10"]["ANB_Teilbremsung_Freigabe"]) or bool(ext_cp.vl["ACC_10"]["ANB_Zielbremsung_Freigabe"])
 
-    # Update ACC radar status.
-    self.acc_type = ext_cp.vl["ACC_06"]["ACC_Typ"]
+    # Update drivetrain coordinator config and state
+    # TODO: any way to detect this once, earlier in startup?
+    tsk_coding = pt_cp.vl["Motor_Code_01"]["TSK_Codierung"]
+    if tsk_coding == 3:
+      self.acc_type = 0   # Basic (min speed > 0)
+    elif tsk_coding == 4:
+      self.acc_type = 1   # Follow-to-Stop
+    elif tsk_coding == 5:
+      self.acc_type = 2   # Stop-and-Go
+    else:
+      self.acc_type = -1  # ACC control not supported (simple cruise control, or nothing at all)
+      ret.cruiseState.nonAdaptive = True
+
     if pt_cp.vl["TSK_06"]["TSK_Status"] == 2:
       # ACC okay and enabled, but not currently engaged
       ret.cruiseState.available = True
@@ -121,13 +136,15 @@ class CarState(CarStateBase):
       # ACC okay but disabled (1), or a radar visibility or other fault/disruption (6 or 7)
       ret.cruiseState.available = False
       ret.cruiseState.enabled = False
-    self.esp_hold_confirmation = bool(pt_cp.vl["ESP_21"]["ESP_Haltebestaetigung"])
-    ret.cruiseState.standstill = self.CP.pcmCruise and self.esp_hold_confirmation
-    ret.accFaulted = pt_cp.vl["TSK_06"]["TSK_Status"] in (6, 7)
 
-    # Update ACC setpoint. When the setpoint is zero or there's an error, the
-    # radar sends a set-speed of ~90.69 m/s / 203mph.
-    if self.CP.pcmCruise:
+    ret.cruiseState.standstill = self.CP.pcmCruise and self.esp_hold_confirmation
+    ret.accFaulted = pt_cp.vl["TSK_06"]["TSK_Status"] == 7
+    ret.accFaultedTemp = pt_cp.vl["TSK_06"]["TSK_Status"] == 6
+
+    # Update stock ACC data as applicable
+    if self.CP.pcmCruise and self.CP.flags & VolkswagenFlags.HAS_RADAR:
+      ret.accFaulted |= ext_cp.vl["ACC_06"]["ACC_Status_ACC"] == 7
+      ret.accFaultedTemp |= ext_cp.vl["ACC_06"]["ACC_Status_ACC"] == 6
       ret.cruiseState.speed = ext_cp.vl["ACC_02"]["ACC_Wunschgeschw_02"] * CV.KPH_TO_MS
       if ret.cruiseState.speed > 90:
         ret.cruiseState.speed = 0
@@ -137,9 +154,6 @@ class CarState(CarStateBase):
     ret.rightBlinker = bool(pt_cp.vl["Blinkmodi_02"]["Comfort_Signal_Right"])
     ret.buttonEvents = self.create_button_events(pt_cp, self.CCP.BUTTONS)
     self.gra_stock_values = pt_cp.vl["GRA_ACC_01"]
-
-    # Additional safety checks performed in CarInterface.
-    ret.espDisabled = pt_cp.vl["ESP_21"]["ESP_Tastung_passiv"] != 0
 
     return ret
 
@@ -294,6 +308,7 @@ class CarState(CarStateBase):
       ("GRA_Tip_Stufe_2", "GRA_ACC_01"),         # unknown related to stalk type
       ("GRA_ButtonTypeInfo", "GRA_ACC_01"),      # unknown related to stalk type
       ("COUNTER", "GRA_ACC_01"),                 # GRA_ACC_01 CAN message counter
+      ("TSK_Codierung", "Motor_Code_01"),        # Cruise control type (GRA/Basic/FtS/SnG)
     ]
 
     checks = [
@@ -326,8 +341,9 @@ class CarState(CarStateBase):
 
     if CP.networkLocation == NetworkLocation.fwdCamera:
       # Radars are here on CANBUS.pt
-      signals += MqbExtraSignals.fwd_radar_signals
-      checks += MqbExtraSignals.fwd_radar_checks
+      if CP.flags & VolkswagenFlags.HAS_RADAR:
+        signals += MqbExtraSignals.fwd_radar_signals
+        checks += MqbExtraSignals.fwd_radar_checks
       if CP.enableBsm:
         signals += MqbExtraSignals.bsm_radar_signals
         checks += MqbExtraSignals.bsm_radar_checks
@@ -357,8 +373,9 @@ class CarState(CarStateBase):
       ]
     else:
       # Radars are here on CANBUS.cam
-      signals += MqbExtraSignals.fwd_radar_signals
-      checks += MqbExtraSignals.fwd_radar_checks
+      if CP.flags & VolkswagenFlags.HAS_RADAR:
+        signals += MqbExtraSignals.fwd_radar_signals
+        checks += MqbExtraSignals.fwd_radar_checks
       if CP.enableBsm:
         signals += MqbExtraSignals.bsm_radar_signals
         checks += MqbExtraSignals.bsm_radar_checks
@@ -431,6 +448,7 @@ class CarState(CarStateBase):
       ("Motor_5", 50),      # From J623 Engine control module
       ("Lenkhilfe_2", 20),  # From J500 Steering Assist with integrated sensors
       ("Gate_Komf_1", 10),  # From J533 CAN gateway
+      ("Motor_Code_01", 1), # From J623 Engine control module
     ]
 
     if CP.transmissionType == TransmissionType.automatic:
@@ -486,7 +504,7 @@ class MqbExtraSignals:
   # Additional signal and message lists for optional or bus-portable controllers
   fwd_radar_signals = [
     ("ACC_Wunschgeschw_02", "ACC_02"),           # ACC set speed
-    ("ACC_Typ", "ACC_06"),                       # Basic vs FtS vs SnG
+    ("ACC_Status_ACC", "ACC_06"),                # ACC radar engagement and fault status
     ("AWV2_Freigabe", "ACC_10"),                 # FCW brake jerk release
     ("ANB_Teilbremsung_Freigabe", "ACC_10"),     # AEB partial braking release
     ("ANB_Zielbremsung_Freigabe", "ACC_10"),     # AEB target braking release
