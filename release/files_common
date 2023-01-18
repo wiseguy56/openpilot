@@ -280,7 +280,6 @@ selfdrive/loggerd/deleter.py
 selfdrive/loggerd/xattr_cache.py
 
 selfdrive/sensord/SConscript
-selfdrive/sensord/libdiag.h
 selfdrive/sensord/sensors_qcom2.cc
 selfdrive/sensord/sensors/*.cc
 selfdrive/sensord/sensors/*.h
@@ -437,6 +436,7 @@ third_party/acados/larch64/**
 third_party/acados/include/**
 third_party/acados/acados_template/**
 
+third_party/bootstrap/**
 third_party/qt5/larch64/bin/**
 
 scripts/update_now.sh

@@ -2,6 +2,7 @@
 
 #include <QApplication>
 #include <QCompleter>
+#include <QDrag>
 #include <QLineEdit>
 #include <QFutureSynchronizer>
 #include <QGraphicsLayout>
@@ -11,22 +12,24 @@
 #include <QToolTip>
 #include <QtConcurrent>
 
+#include "selfdrive/ui/qt/util.h"
+
 // ChartsWidget
 
 ChartsWidget::ChartsWidget(QWidget *parent) : QWidget(parent) {
   QVBoxLayout *main_layout = new QVBoxLayout(this);
-  main_layout->setContentsMargins(0, 0, 0, 0);
 
   // toolbar
   QToolBar *toolbar = new QToolBar(tr("Charts"), this);
+  toolbar->setIconSize({16, 16});
   title_label = new QLabel();
   title_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   toolbar->addWidget(title_label);
   show_all_values_btn = toolbar->addAction("");
   toolbar->addWidget(range_label = new QLabel());
-  reset_zoom_btn = toolbar->addAction("⟲");
+  reset_zoom_btn = toolbar->addAction(bootstrapPixmap("arrow-counterclockwise"), "");
   reset_zoom_btn->setToolTip(tr("Reset zoom (drag on chart to zoom X-Axis)"));
-  remove_all_btn = toolbar->addAction("✖");
+  remove_all_btn = toolbar->addAction(bootstrapPixmap("x"), "");
   remove_all_btn->setToolTip(tr("Remove all charts"));
   dock_btn = toolbar->addAction("");
   main_layout->addWidget(toolbar);
@@ -137,7 +140,7 @@ void ChartsWidget::updateToolBar() {
   reset_zoom_btn->setEnabled(is_zoomed);
   range_label->setText(is_zoomed ? tr("%1 - %2").arg(zoomed_range.first, 0, 'f', 2).arg(zoomed_range.second, 0, 'f', 2) : "");
   title_label->setText(charts.size() > 0 ? tr("Charts (%1)").arg(charts.size()) : tr("Charts"));
-  dock_btn->setText(docking ? "⬈" : "⬋");
+  dock_btn->setIcon(bootstrapPixmap(docking ? "arrow-up-right" : "arrow-down-left"));
   dock_btn->setToolTip(docking ? tr("Undock charts") : tr("Dock charts"));
 }
 
@@ -223,7 +226,7 @@ ChartView::ChartView(QWidget *parent) : QChartView(nullptr, parent) {
   chart->layout()->setContentsMargins(0, 0, 0, 0);
 
   QToolButton *remove_btn = new QToolButton();
-  remove_btn->setText("X");
+  remove_btn->setIcon(bootstrapPixmap("x"));
   remove_btn->setAutoRaise(true);
   remove_btn->setToolTip(tr("Remove Chart"));
   close_btn_proxy = new QGraphicsProxyWidget(chart);
@@ -231,7 +234,7 @@ ChartView::ChartView(QWidget *parent) : QChartView(nullptr, parent) {
   close_btn_proxy->setZValue(chart->zValue() + 11);
 
   QToolButton *manage_btn = new QToolButton();
-  manage_btn->setText("🔧");
+  manage_btn->setIcon(bootstrapPixmap("gear"));
   manage_btn->setAutoRaise(true);
   manage_btn->setToolTip(tr("Manage series"));
   manage_btn_proxy = new QGraphicsProxyWidget(chart);
@@ -267,7 +270,12 @@ void ChartView::setPlotAreaLeftPosition(int pos) {
 
 void ChartView::addSeries(const QString &msg_id, const Signal *sig) {
   QLineSeries *series = new QLineSeries(this);
+
+  // TODO: Due to a bug in CameraWidget the camera frames
+  // are drawn instead of the graphs on MacOS. Re-enable OpenGL when fixed
+#ifndef __APPLE__
   series->setUseOpenGL(true);
+#endif
   chart()->addSeries(series);
   series->attachAxis(axis_x);
   series->attachAxis(axis_y);
@@ -331,6 +339,17 @@ void ChartView::msgRemoved(uint32_t address) {
   }
 }
 
+void ChartView::addSeries(const QList<QStringList> &series_list) {
+  for (auto &s : series_list) {
+    if (auto m = dbc()->msg(s[0])) {
+      auto it = m->sigs.find(s[2]);
+      if (it != m->sigs.end() && !hasSeries(s[0], &(it->second))) {
+        addSeries(s[0], &(it->second));
+      }
+    }
+  }
+}
+
 void ChartView::manageSeries() {
   SeriesSelector dlg(this);
   for (auto &s : sigs) {
@@ -343,14 +362,7 @@ void ChartView::manageSeries() {
     if (series_list.isEmpty()) {
       emit remove();
     } else {
-      for (auto &s : series_list) {
-        if (auto m = dbc()->msg(s[0])) {
-          auto it = m->sigs.find(s[2]);
-          if (it != m->sigs.end() && !hasSeries(s[0], &(it->second))) {
-            addSeries(s[0], &(it->second));
-          }
-        }
-      }
+      addSeries(series_list);
       for (auto it = sigs.begin(); it != sigs.end(); /**/) {
         bool exists = std::any_of(series_list.cbegin(), series_list.cend(), [&](auto &s) {
           return s[0] == it->msg_id && s[2] == it->sig->name.c_str();
@@ -495,6 +507,23 @@ void ChartView::leaveEvent(QEvent *event) {
   QChartView::leaveEvent(event);
 }
 
+void ChartView::mousePressEvent(QMouseEvent *event) {
+  if (event->button() == Qt::LeftButton && !chart()->plotArea().contains(event->pos()) &&
+      !manage_btn_proxy->widget()->underMouse() && !close_btn_proxy->widget()->underMouse()) {
+    QMimeData *mimeData = new QMimeData;
+    mimeData->setData(mime_type, QByteArray::number((qulonglong)this));
+    QDrag *drag = new QDrag(this);
+    drag->setMimeData(mimeData);
+    drag->setPixmap(grab());
+    drag->setHotSpot(event->pos());
+    Qt::DropAction dropAction = drag->exec(Qt::CopyAction | Qt::MoveAction, Qt::MoveAction);
+    if (dropAction == Qt::MoveAction) {
+      return;
+    }
+  }
+  QChartView::mousePressEvent(event);
+}
+
 void ChartView::mouseReleaseEvent(QMouseEvent *event) {
   auto rubber = findChild<QRubberBand *>();
   if (event->button() == Qt::LeftButton && rubber && rubber->isVisible()) {
@@ -548,6 +577,35 @@ void ChartView::mouseMoveEvent(QMouseEvent *ev) {
     QToolTip::hideText();
   }
   QChartView::mouseMoveEvent(ev);
+}
+
+void ChartView::dragMoveEvent(QDragMoveEvent *event) {
+  if (event->mimeData()->hasFormat(mime_type)) {
+    event->setDropAction(event->source() == this ? Qt::MoveAction : Qt::CopyAction);
+    event->accept();
+  } else {
+    event->ignore();
+  }
+}
+
+void ChartView::dropEvent(QDropEvent *event) {
+  if (event->mimeData()->hasFormat(mime_type)) {
+    if (event->source() == this) {
+      event->setDropAction(Qt::MoveAction);
+      event->accept();
+    } else {
+      ChartView *source_chart = (ChartView *)event->source();
+      QList<QStringList> series;
+      for (auto &s : source_chart->sigs) {
+        series.push_back({s.msg_id, msgName(s.msg_id), QString::fromStdString(s.sig->name)});
+      }
+      addSeries(series);
+      emit source_chart->remove();
+      event->acceptProposedAction();
+    }
+  } else {
+    event->ignore();
+  }
 }
 
 void ChartView::drawForeground(QPainter *painter, const QRectF &rect) {
