@@ -3,7 +3,7 @@ from panda import Panda
 from common.conversions import Conversions as CV
 from selfdrive.car import STD_CARGO_KG, get_safety_config
 from selfdrive.car.interfaces import CarInterfaceBase
-from selfdrive.car.volkswagen.values import CAR, PQ_CARS, CANBUS, NetworkLocation, TransmissionType, GearShifter
+from selfdrive.car.volkswagen.values import CAR, MLB_CARS, PQ_CARS, CANBUS, NetworkLocation, TransmissionType, GearShifter
 
 ButtonType = car.CarState.ButtonEvent.Type
 EventName = car.CarEvent.EventName
@@ -50,6 +50,24 @@ class CarInterface(CarInterfaceBase):
       # Panda ALLOW_DEBUG firmware required.
       ret.dashcamOnly = True
 
+    elif candidate in MLB_CARS:
+      # Set global MLB parameters
+      ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.volkswagenMlb)]
+      ret.enableBsm = 0x30F in fingerprint[0]  # SWA_01
+
+      if 0x82 in fingerprint[0] or use_off_car_defaults:  # Getriebe_01
+        ret.transmissionType = TransmissionType.automatic
+      else:
+        ret.transmissionType = TransmissionType.manual
+
+      if any(msg in fingerprint[1] for msg in (0x80, 0x86)):  # Motor_01, LWI_01
+        ret.networkLocation = NetworkLocation.gateway
+      else:
+        ret.networkLocation = NetworkLocation.fwdCamera
+
+      # TODO: probably go to dashcam mode for initial upstream
+      # ret.dashcamOnly = True
+
     else:
       # Set global MQB parameters
       ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.volkswagen)]
@@ -80,7 +98,8 @@ class CarInterface(CarInterfaceBase):
 
     # Global longitudinal tuning defaults, can be overridden per-vehicle
 
-    ret.experimentalLongitudinalAvailable = ret.networkLocation == NetworkLocation.gateway or use_off_car_defaults
+    exp_long_supported = ret.networkLocation == NetworkLocation.gateway and candidate not in MLB_CARS
+    ret.experimentalLongitudinalAvailable = exp_long_supported or use_off_car_defaults
     if experimental_long:
       # Proof-of-concept, prep for E2E only. No radar points available. Panda ALLOW_DEBUG firmware required.
       ret.openpilotLongitudinalControl = True
@@ -165,6 +184,10 @@ class CarInterface(CarInterfaceBase):
     elif candidate == CAR.AUDI_A3_MK3:
       ret.mass = 1335 + STD_CARGO_KG
       ret.wheelbase = 2.61
+
+    elif candidate == CAR.AUDI_A4_MK8:
+      ret.mass = 1770 + STD_CARGO_KG
+      ret.wheelbase = 2.81
 
     elif candidate == CAR.AUDI_Q2_MK1:
       ret.mass = 1205 + STD_CARGO_KG

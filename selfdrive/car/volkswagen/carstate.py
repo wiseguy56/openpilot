@@ -3,8 +3,8 @@ from cereal import car
 from common.conversions import Conversions as CV
 from selfdrive.car.interfaces import CarStateBase
 from opendbc.can.parser import CANParser
-from selfdrive.car.volkswagen.values import DBC, CANBUS, PQ_CARS, NetworkLocation, TransmissionType, GearShifter, \
-                                            CarControllerParams
+from selfdrive.car.volkswagen.values import DBC, CANBUS, MLB_CARS, PQ_CARS, NetworkLocation, TransmissionType,\
+                                            GearShifter, CarControllerParams
 
 
 class CarState(CarStateBase):
@@ -14,6 +14,7 @@ class CarState(CarStateBase):
     self.button_states = {button.event_type: False for button in self.CCP.BUTTONS}
     self.esp_hold_confirmation = False
     self.upscale_lead_car_signal = False
+    self.is_mlb = CP.carFingerprint in MLB_CARS
 
   def create_button_events(self, pt_cp, buttons):
     button_events = []
@@ -35,12 +36,20 @@ class CarState(CarStateBase):
 
     ret = car.CarState.new_message()
     # Update vehicle speed and acceleration from ABS wheel speeds.
-    ret.wheelSpeeds = self.get_wheel_speeds(
-      pt_cp.vl["ESP_19"]["ESP_VL_Radgeschw_02"],
-      pt_cp.vl["ESP_19"]["ESP_VR_Radgeschw_02"],
-      pt_cp.vl["ESP_19"]["ESP_HL_Radgeschw_02"],
-      pt_cp.vl["ESP_19"]["ESP_HR_Radgeschw_02"],
-    )
+    if self.is_mlb:
+      ret.wheelSpeeds = self.get_wheel_speeds(
+        pt_cp.vl["ESP_03"]["ESP_VL_Radgeschw"],
+        pt_cp.vl["ESP_03"]["ESP_VR_Radgeschw"],
+        pt_cp.vl["ESP_03"]["ESP_HL_Radgeschw"],
+        pt_cp.vl["ESP_03"]["ESP_HR_Radgeschw"],
+      )
+    else:
+      ret.wheelSpeeds = self.get_wheel_speeds(
+        pt_cp.vl["ESP_19"]["ESP_VL_Radgeschw_02"],
+        pt_cp.vl["ESP_19"]["ESP_VR_Radgeschw_02"],
+        pt_cp.vl["ESP_19"]["ESP_HL_Radgeschw_02"],
+        pt_cp.vl["ESP_19"]["ESP_HR_Radgeschw_02"],
+      )
 
     ret.vEgoRaw = float(np.mean([ret.wheelSpeeds.fl, ret.wheelSpeeds.fr, ret.wheelSpeeds.rl, ret.wheelSpeeds.rr]))
     ret.vEgo, ret.aEgo = self.update_speed_kf(ret.vEgoRaw)
@@ -59,33 +68,46 @@ class CarState(CarStateBase):
     ret.steerFaultPermanent = hca_status in ("DISABLED", "FAULT")
     ret.steerFaultTemporary = hca_status in ("INITIALIZING", "REJECTED")
 
-    # Update gas, brakes, and gearshift.
-    ret.gas = pt_cp.vl["Motor_20"]["MO_Fahrpedalrohwert_01"] / 100.0
+    if self.is_mlb:
+      ret.gas = pt_cp.vl["Motor_03"]["MO_Fahrpedalrohwert_01"] / 100.0
+      brake_pedal_pressed = bool(pt_cp.vl["Motor_03"]["MO_Fahrer_bremst"])
+    else:
+      ret.gas = pt_cp.vl["Motor_20"]["MO_Fahrpedalrohwert_01"] / 100.0
+      brake_pedal_pressed = bool(pt_cp.vl["Motor_14"]["MO_Fahrer_bremst"])
     ret.gasPressed = ret.gas > 0
     ret.brake = pt_cp.vl["ESP_05"]["ESP_Bremsdruck"] / 250.0  # FIXME: this is pressure in Bar, not sure what OP expects
-    brake_pedal_pressed = bool(pt_cp.vl["Motor_14"]["MO_Fahrer_bremst"])
     brake_pressure_detected = bool(pt_cp.vl["ESP_05"]["ESP_Fahrer_bremst"])
     ret.brakePressed = brake_pedal_pressed or brake_pressure_detected
     ret.parkingBrake = bool(pt_cp.vl["Kombi_01"]["KBI_Handbremse"])  # FIXME: need to include an EPB check as well
 
     # Update gear and/or clutch position data.
     if trans_type == TransmissionType.automatic:
-      ret.gearShifter = self.parse_gear_shifter(self.CCP.shifter_values.get(pt_cp.vl["Getriebe_11"]["GE_Fahrstufe"], None))
+      if self.is_mlb:
+        gear_position = "D"
+      else:
+        gear_position = pt_cp.vl["Getriebe_11"]["GE_Fahrstufe"]
+      ret.gearShifter = self.parse_gear_shifter(self.CCP.shifter_values.get(gear_position, None))
     elif trans_type == TransmissionType.direct:
       ret.gearShifter = self.parse_gear_shifter(self.CCP.shifter_values.get(pt_cp.vl["EV_Gearshift"]["GearPosition"], None))
     elif trans_type == TransmissionType.manual:
-      ret.clutchPressed = not pt_cp.vl["Motor_14"]["MO_Kuppl_schalter"]
+      if self.is_mlb:
+        ret.clutchPressed = not pt_cp.vl["Motor_03"]["MO_Kuppl_schalter"]
+      else:
+        ret.clutchPressed = not pt_cp.vl["Motor_14"]["MO_Kuppl_schalter"]
       if bool(pt_cp.vl["Gateway_72"]["BCM1_Rueckfahrlicht_Schalter"]):
         ret.gearShifter = GearShifter.reverse
       else:
         ret.gearShifter = GearShifter.drive
 
     # Update door and trunk/hatch lid open status.
-    ret.doorOpen = any([pt_cp.vl["Gateway_72"]["ZV_FT_offen"],
-                        pt_cp.vl["Gateway_72"]["ZV_BT_offen"],
-                        pt_cp.vl["Gateway_72"]["ZV_HFS_offen"],
-                        pt_cp.vl["Gateway_72"]["ZV_HBFS_offen"],
-                        pt_cp.vl["Gateway_72"]["ZV_HD_offen"]])
+    if self.is_mlb:
+      ret.doorOpen = False
+    else:
+      ret.doorOpen = any([pt_cp.vl["Gateway_72"]["ZV_FT_offen"],
+                          pt_cp.vl["Gateway_72"]["ZV_BT_offen"],
+                          pt_cp.vl["Gateway_72"]["ZV_HFS_offen"],
+                          pt_cp.vl["Gateway_72"]["ZV_HBFS_offen"],
+                          pt_cp.vl["Gateway_72"]["ZV_HD_offen"]])
 
     # Update seatbelt fastened status.
     ret.seatbeltUnlatched = pt_cp.vl["Airbag_02"]["AB_Gurtschloss_FA"] != 3
@@ -105,8 +127,12 @@ class CarState(CarStateBase):
     # braking release bits are set.
     # Refer to VW Self Study Program 890253: Volkswagen Driver Assistance
     # Systems, chapter on Front Assist with Braking: Golf Family for all MQB
-    ret.stockFcw = bool(ext_cp.vl["ACC_10"]["AWV2_Freigabe"])
-    ret.stockAeb = bool(ext_cp.vl["ACC_10"]["ANB_Teilbremsung_Freigabe"]) or bool(ext_cp.vl["ACC_10"]["ANB_Zielbremsung_Freigabe"])
+    if self.is_mlb:
+      ret.stockFcw = False
+      ret.stockAeb = False
+    else:
+      ret.stockFcw = bool(ext_cp.vl["ACC_10"]["AWV2_Freigabe"])
+      ret.stockAeb = bool(ext_cp.vl["ACC_10"]["ANB_Teilbremsung_Freigabe"]) or bool(ext_cp.vl["ACC_10"]["ANB_Zielbremsung_Freigabe"])
 
     # Update ACC radar status.
     self.acc_type = ext_cp.vl["ACC_06"]["ACC_Typ"]
