@@ -4,7 +4,7 @@ from selfdrive.config import Conversions as CV
 from selfdrive.car.interfaces import CarStateBase
 from opendbc.can.parser import CANParser
 from opendbc.can.can_define import CANDefine
-from selfdrive.car.audi_b8.values import DBC_FILES, CANBUS, NetworkLocation, TransmissionType, GearShifter, BUTTON_STATES, CarControllerParams
+from selfdrive.car.audi_b8.values import DBC_FILES, CANBUS, NetworkLocation, GearShifter, BUTTON_STATES, CarControllerParams
 
 class CarState(CarStateBase):
   def __init__(self, CP):
@@ -113,9 +113,10 @@ class CarState(CarStateBase):
 
     # Update ACC setpoint. When the setpoint is zero or there's an error, the
     # radar sends a set-speed of ~90.69 m/s / 203mph.
-    ret.cruiseState.speed = ext_cp.vl["ACC_02"]["ACC_Wunschgeschw"] * CV.KPH_TO_MS
-    if ret.cruiseState.speed > 90:
-      ret.cruiseState.speed = 0
+    #ret.cruiseState.speed = ext_cp.vl["ACC_02"]["ACC_Wunschgeschw"] * CV.KPH_TO_MS
+    #if ret.cruiseState.speed > 90:
+    #  ret.cruiseState.speed = 0
+    ret.cruiseState.speed = 0
 
     # Update control button states for turn signals and ACC controls.
     self.buttonStates["accelCruise"] = bool(pt_cp.vl["GRA_ACC_01"]["GRA_Tip_Hoch"])
@@ -222,13 +223,13 @@ class CarState(CarStateBase):
 #                  ("BCM1_Rueckfahrlicht_Schalter", "Gateway_72", 0)]  # Reverse light from BCM
 #      checks += [("Motor_14", 10)]  # From J623 Engine control module
 
-    if CP.networkLocation == NetworkLocation.fwdCamera:
+    #if CP.networkLocation == NetworkLocation.fwdCamera:
       # Radars are here on CANBUS.pt
-      signals += MqbExtraSignals.fwd_radar_signals
-      checks += MqbExtraSignals.fwd_radar_checks
-      if CP.enableBsm:
-        signals += MqbExtraSignals.bsm_radar_signals
-        checks += MqbExtraSignals.bsm_radar_checks
+      #signals += MqbExtraSignals.fwd_radar_signals
+      #checks += MqbExtraSignals.fwd_radar_checks
+      #if CP.enableBsm:
+      #  signals += MqbExtraSignals.bsm_radar_signals
+      #  checks += MqbExtraSignals.bsm_radar_checks
 
     return CANParser(DBC_FILES.audi_b8, signals, checks, CANBUS.pt)
 
@@ -251,13 +252,13 @@ class CarState(CarStateBase):
         # sig_address, frequency
 #        ("LDW_02", 10)      # From R242 Driver assistance camera
       ]
-    else:
+    #else:
       # Radars are here on CANBUS.cam
-      signals += MqbExtraSignals.fwd_radar_signals
-      checks += MqbExtraSignals.fwd_radar_checks
-      if CP.enableBsm:
-        signals += MqbExtraSignals.bsm_radar_signals
-        checks += MqbExtraSignals.bsm_radar_checks
+      #signals += MqbExtraSignals.fwd_radar_signals
+      #checks += MqbExtraSignals.fwd_radar_checks
+      #if CP.enableBsm:
+      #  signals += MqbExtraSignals.bsm_radar_signals
+      #  checks += MqbExtraSignals.bsm_radar_checks
 
     return CANParser(DBC_FILES.audi_b8, signals, checks, CANBUS.cam)
 
@@ -274,11 +275,11 @@ class MqbExtraSignals:
     ("ACC_02", 17),                                 # From J428 ACC radar control module
   ]
   bsm_radar_signals = [
-#    ("SWA_Infostufe_SWA_li", "SWA_01", 0),          # Blind spot object info, left
-#    ("SWA_Warnung_SWA_li", "SWA_01", 0),            # Blind spot object warning, left
-#    ("SWA_Infostufe_SWA_re", "SWA_01", 0),          # Blind spot object info, right
-#    ("SWA_Warnung_SWA_re", "SWA_01", 0),            # Blind spot object warning, right
+    ("SWA_Infostufe_SWA_li", "SWA_01", 0),          # Blind spot object info, left
+    ("SWA_Warnung_SWA_li", "SWA_01", 0),            # Blind spot object warning, left
+    ("SWA_Infostufe_SWA_re", "SWA_01", 0),          # Blind spot object info, right
+    ("SWA_Warnung_SWA_re", "SWA_01", 0),            # Blind spot object warning, right
   ]
   bsm_radar_checks = [
-#    ("SWA_01", 20),                                 # From J1086 Lane Change Assist
+    ("SWA_01", 20),                                 # From J1086 Lane Change Assist
   ]
