@@ -32,6 +32,7 @@ class CarController:
     actuators = CC.actuators
     hud_control = CC.hudControl
     can_sends = []
+    output_steer = 0
 
     # **** Steering Controls ************************************************ #
 
@@ -126,7 +127,7 @@ class CarController:
                                                            cancel=CC.cruiseControl.cancel, resume=CC.cruiseControl.resume))
 
     new_actuators = actuators.copy()
-    new_actuators.steer = self.apply_steer_last / self.CCP.STEER_MAX
+    new_actuators.steer = output_steer / self.CCP.STEER_MAX
     new_actuators.steerOutputCan = self.apply_steer_last
 
     self.gra_acc_counter_last = CS.gra_stock_values["COUNTER"]
