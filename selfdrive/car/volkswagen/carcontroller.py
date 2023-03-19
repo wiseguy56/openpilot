@@ -21,8 +21,10 @@ class CarController:
     self.apply_steer_last = 0
     self.gra_acc_counter_last = None
     self.frame = 0
-    self.hcaSameTorqueCount = 0
-    self.hcaEnabledFrameCount = 0
+    self.eps_timer_workaround = True  # For testing, replace with CP.carFingerprint in (PQ_CARS, MLB_CARS)
+    self.hca_frames_timer_running = 0
+    self.hca_frames_low_torque = 0
+    self.hca_frames_same_torque = 0
 
   def update(self, CC, CS, ext_bus, now_nanos):
     actuators = CC.actuators
@@ -38,36 +40,40 @@ class CarController:
       #   * Don't send > 3.00 Newton-meters torque
       #   * Don't send the same torque for > 6 seconds
       #   * Don't send uninterrupted steering for > 360 seconds
-      # One frame of HCA disabled is enough to reset the timer, without zeroing the
-      # torque value. Do that anytime we happen to have 0 torque, or failing that,
-      # when exceeding ~1/3 the 360 second timer.
+      # MQB racks reset the uninterrupted steering timer after a single frame
+      # of HCA disabled; this is done whenever output happens to be zero.
+      # PQ35, PQ46, NMS and MLB racks need >1 second to reset. Try to perform
+      # resets when engaged for >240 seconds and output stays under 20%.
 
       if CC.latActive:
         new_steer = int(round(actuators.steer * self.CCP.STEER_MAX))
         apply_steer = apply_driver_steer_torque_limits(new_steer, self.apply_steer_last, CS.out.steeringTorque, self.CCP)
-        if apply_steer == 0:
-          hcaEnabled = False
-          self.hcaEnabledFrameCount = 0
+        self.hca_frames_timer_running += self.CCP.STEER_STEP
+        if self.apply_steer_last == apply_steer:
+          self.hca_frames_same_torque += self.CCP.STEER_STEP
+          if self.hca_frames_same_torque > 1.9 * DT_CTRL:
+            apply_steer -= (1, -1)[apply_steer < 0]
+            self.hca_frames_same_torque = 0
         else:
-          self.hcaEnabledFrameCount += 1
-          if self.hcaEnabledFrameCount >= 118 * (100 / self.CCP.STEER_STEP):  # 118s
-            hcaEnabled = False
-            self.hcaEnabledFrameCount = 0
+          self.hca_frames_same_torque = 0
+        hca_enabled = abs(apply_steer) > 0
+        if self.eps_timer_workaround and self.hca_frames_timer_running >= 10 * DT_CTRL:  # FIXME: test, set back to 240
+          if abs(apply_steer) <= self.CCP.STEER_MAX * 0.2:
+            self.hca_frames_low_torque += self.CCP.STEER_STEP
           else:
-            hcaEnabled = True
-            if self.apply_steer_last == apply_steer:
-              self.hcaSameTorqueCount += 1
-              if self.hcaSameTorqueCount > 1.9 * (100 / self.CCP.STEER_STEP):  # 1.9s
-                apply_steer -= (1, -1)[apply_steer < 0]
-                self.hcaSameTorqueCount = 0
-            else:
-              self.hcaSameTorqueCount = 0
+            self.hca_frames_low_torque = 0
+          if self.hca_frames_low_torque >= 0.5 * DT_CTRL:
+            hca_enabled = False
+            if self.hca_frames_low_torque >= 1.55 * DT_CTRL:
+              self.hca_frames_timer_running = 0
       else:
-        hcaEnabled = False
+        self.hca_frames_timer_running = 0
+        self.hca_frames_low_torque = 0
+        hca_enabled = False
         apply_steer = 0
 
+      can_sends.append(self.CCS.create_steering_control(self.packer_pt, CANBUS.pt, apply_steer, hca_enabled))
       self.apply_steer_last = apply_steer
-      can_sends.append(self.CCS.create_steering_control(self.packer_pt, CANBUS.pt, apply_steer, hcaEnabled))
 
     # **** Acceleration Controls ******************************************** #
 
