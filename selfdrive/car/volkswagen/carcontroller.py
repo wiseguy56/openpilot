@@ -31,6 +31,7 @@ class CarController:
   def update(self, CC, CS, ext_bus, now_nanos):
     actuators = CC.actuators
     hud_control = CC.hudControl
+    output_steer = 0
     can_sends = []
 
     # **** Steering Controls ************************************************ #
@@ -59,33 +60,31 @@ class CarController:
         else:
           self.hca_frame_same_torque = 0
         hca_enabled = abs(apply_steer) > 0
-        self.hca_output_steer = apply_steer
         if self.eps_timer_workaround and self.hca_frame_timer_running >= 240 / DT_CTRL:
           if abs(apply_steer) <= self.CCP.STEER_MAX * 0.2:
             self.hca_frame_low_torque += self.CCP.STEER_STEP
             if self.hca_frame_low_torque >= 0.5 / DT_CTRL:
               hca_enabled = False
-              self.hca_output_steer = 0
           else:
             self.hca_frame_low_torque = 0
             if self.hca_frame_timer_resetting > 0:
-              apply_steer = clip(apply_steer, -self.CCP.STEER_DELTA_UP, self.CCP.STEER_DELTA_UP)
-              self.hca_output_steer = apply_steer
+              apply_steer = 0
       else:
+        self.hca_frame_low_torque = 0
         hca_enabled = False
         apply_steer = 0
-        self.hca_frame_low_torque = 0
-        self.hca_output_steer = 0
 
       if hca_enabled:
+        output_steer = apply_steer
         self.hca_frame_timer_resetting = 0
       else:
+        output_steer = 0
         self.hca_frame_timer_resetting += self.CCP.STEER_STEP
         if self.hca_frame_timer_resetting >= 1.1 / DT_CTRL:
           self.hca_frame_timer_running = 0
           apply_steer = 0
 
-      can_sends.append(self.CCS.create_steering_control(self.packer_pt, CANBUS.pt, self.hca_output_steer, hca_enabled))
+      can_sends.append(self.CCS.create_steering_control(self.packer_pt, CANBUS.pt, output_steer, hca_enabled))
       self.apply_steer_last = apply_steer
 
     # **** Acceleration Controls ******************************************** #
@@ -125,7 +124,7 @@ class CarController:
                                                            cancel=CC.cruiseControl.cancel, resume=CC.cruiseControl.resume))
 
     new_actuators = actuators.copy()
-    new_actuators.steer = self.apply_steer_last / self.CCP.STEER_MAX
+    new_actuators.steer = output_steer / self.CCP.STEER_MAX
     new_actuators.steerOutputCan = self.apply_steer_last
 
     self.gra_acc_counter_last = CS.gra_stock_values["COUNTER"]
