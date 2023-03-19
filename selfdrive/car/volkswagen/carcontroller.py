@@ -36,20 +36,20 @@ class CarController:
 
     # **** Steering Controls ************************************************ #
 
-    # Logic to avoid HCA state 4 "refused":
-    #   * Don't steer unless HCA is in state 3 "ready" or 5 "active"
-    #   * Don't steer at standstill
-    #   * Don't send > 3.00 Newton-meters torque
-    #   * Don't send the same torque for > 6 seconds
-    #   * Don't send uninterrupted steering for > 360 seconds
-    # MQB racks reset the uninterrupted steering timer after a single frame
-    # of HCA disabled; this is done whenever output happens to be zero.
-    # PQ35, PQ46, NMS and MLB racks need > 1 second to reset; try to reset
-    # if engaged for a long time and torque output is currently low. Resets
-    # are aborted early if torque demand rises. Long resets, completed or
-    # not, need apply_steer reset to 0 on exit due to rate limit safety.
-
     if self.frame % self.CCP.STEER_STEP == 0:
+      # Logic to avoid HCA state 4 "refused":
+      #   * Don't steer unless HCA is in state 3 "ready" or 5 "active"
+      #   * Don't steer at standstill
+      #   * Don't send > 3.00 Newton-meters torque
+      #   * Don't send the same torque for > 6 seconds
+      #   * Don't send uninterrupted steering for > 360 seconds
+      # MQB racks reset the uninterrupted steering timer after a single frame
+      # of HCA disabled; this is done whenever output happens to be zero.
+      # PQ35, PQ46, NMS and MLB racks need > 1 second to reset; try to reset
+      # if engaged for a long time and torque output is currently low. Resets
+      # are aborted early if torque demand rises. Long resets, completed or
+      # not, need apply_steer reset to 0 on exit due to rate limit safety.
+
       if CC.latActive:
         new_steer = int(round(actuators.steer * self.CCP.STEER_MAX))
         apply_steer = apply_driver_steer_torque_limits(new_steer, self.apply_steer_last, CS.out.steeringTorque, self.CCP)
