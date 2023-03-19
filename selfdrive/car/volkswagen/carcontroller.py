@@ -22,11 +22,11 @@ class CarController:
     self.gra_acc_counter_last = None
     self.frame = 0
     self.eps_timer_workaround = True  # For testing, replace with CP.carFingerprint in (PQ_CARS, MLB_CARS)
+    self.eps_timer_soft_disable_alert = False
     self.hca_frame_timer_running = 0
     self.hca_frame_timer_resetting = 0
     self.hca_frame_low_torque = 0
     self.hca_frame_same_torque = 0
-    self.hca_output_steer = 0
 
   def update(self, CC, CS, ext_bus, now_nanos):
     actuators = CC.actuators
@@ -36,34 +36,36 @@ class CarController:
 
     # **** Steering Controls ************************************************ #
 
-    if self.frame % self.CCP.STEER_STEP == 0:
-      # Logic to avoid HCA state 4 "refused":
-      #   * Don't steer unless HCA is in state 3 "ready" or 5 "active"
-      #   * Don't steer at standstill
-      #   * Don't send > 3.00 Newton-meters torque
-      #   * Don't send the same torque for > 6 seconds
-      #   * Don't send uninterrupted steering for > 360 seconds
-      # MQB racks reset the uninterrupted steering timer after a single frame
-      # of HCA disabled; this is done whenever output happens to be zero.
-      # PQ35, PQ46, NMS and MLB racks need >1 second to reset. Try to perform
-      # resets when engaged for >240 seconds and output stays under 20%.
+    # Logic to avoid HCA state 4 "refused":
+    #   * Don't steer unless HCA is in state 3 "ready" or 5 "active"
+    #   * Don't steer at standstill
+    #   * Don't send > 3.00 Newton-meters torque
+    #   * Don't send the same torque for > 6 seconds
+    #   * Don't send uninterrupted steering for > 360 seconds
+    # MQB racks reset the uninterrupted steering timer after a single frame
+    # of HCA disabled; this is done whenever output happens to be zero.
+    # PQ35, PQ46, NMS and MLB racks need > 1 second to reset; try to reset
+    # if engaged for a long time and torque output is currently low. Resets
+    # are aborted early if torque demand rises. Long resets, completed or
+    # not, need apply_steer reset to 0 on exit due to rate limit safety.
 
+    if self.frame % self.CCP.STEER_STEP == 0:
       if CC.latActive:
         new_steer = int(round(actuators.steer * self.CCP.STEER_MAX))
         apply_steer = apply_driver_steer_torque_limits(new_steer, self.apply_steer_last, CS.out.steeringTorque, self.CCP)
         self.hca_frame_timer_running += self.CCP.STEER_STEP
         if self.apply_steer_last == apply_steer:
           self.hca_frame_same_torque += self.CCP.STEER_STEP
-          if self.hca_frame_same_torque > 1.9 / DT_CTRL:
+          if self.hca_frame_same_torque > self.CCP.STEER_TIME_STUCK_TORQUE / DT_CTRL:
             apply_steer -= (1, -1)[apply_steer < 0]
             self.hca_frame_same_torque = 0
         else:
           self.hca_frame_same_torque = 0
         hca_enabled = abs(apply_steer) > 0
-        if self.eps_timer_workaround and self.hca_frame_timer_running >= 240 / DT_CTRL:
-          if abs(apply_steer) <= self.CCP.STEER_MAX * 0.2:
+        if self.eps_timer_workaround and self.hca_frame_timer_running >= self.CCP.STEER_TIME_BM / DT_CTRL:
+          if abs(apply_steer) <= self.CCP.STEER_LOW_TORQUE:
             self.hca_frame_low_torque += self.CCP.STEER_STEP
-            if self.hca_frame_low_torque >= 0.5 / DT_CTRL:
+            if self.hca_frame_low_torque >= self.CCP.STEER_TIME_LOW_TORQUE / DT_CTRL:
               hca_enabled = False
           else:
             self.hca_frame_low_torque = 0
@@ -80,12 +82,13 @@ class CarController:
       else:
         output_steer = 0
         self.hca_frame_timer_resetting += self.CCP.STEER_STEP
-        if self.hca_frame_timer_resetting >= 1.1 / DT_CTRL:
+        if self.hca_frame_timer_resetting >= 1.1 / DT_CTRL or not self.eps_timer_workaround:
           self.hca_frame_timer_running = 0
           apply_steer = 0
 
-      can_sends.append(self.CCS.create_steering_control(self.packer_pt, CANBUS.pt, output_steer, hca_enabled))
+      self.eps_timer_soft_disable_alert = self.hca_frame_timer_running > self.CCP.STEER_TIME_ALERT / DT_CTRL
       self.apply_steer_last = apply_steer
+      can_sends.append(self.CCS.create_steering_control(self.packer_pt, CANBUS.pt, output_steer, hca_enabled))
 
     # **** Acceleration Controls ******************************************** #
 
@@ -129,4 +132,4 @@ class CarController:
 
     self.gra_acc_counter_last = CS.gra_stock_values["COUNTER"]
     self.frame += 1
-    return new_actuators, can_sends
+    return new_actuators, can_sends, self.eps_timer_soft_disable_alert
