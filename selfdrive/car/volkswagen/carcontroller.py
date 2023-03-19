@@ -22,9 +22,10 @@ class CarController:
     self.gra_acc_counter_last = None
     self.frame = 0
     self.eps_timer_workaround = True  # For testing, replace with CP.carFingerprint in (PQ_CARS, MLB_CARS)
-    self.hca_frames_timer_running = 0
-    self.hca_frames_low_torque = 0
-    self.hca_frames_same_torque = 0
+    self.hca_frame_timer_running = 0
+    self.hca_frame_timer_resetting = 0
+    self.hca_frame_low_torque = 0
+    self.hca_frame_same_torque = 0
 
   def update(self, CC, CS, ext_bus, now_nanos):
     actuators = CC.actuators
@@ -48,29 +49,33 @@ class CarController:
       if CC.latActive:
         new_steer = int(round(actuators.steer * self.CCP.STEER_MAX))
         apply_steer = apply_driver_steer_torque_limits(new_steer, self.apply_steer_last, CS.out.steeringTorque, self.CCP)
-        self.hca_frames_timer_running += self.CCP.STEER_STEP
+        self.hca_frame_timer_running += self.CCP.STEER_STEP
         if self.apply_steer_last == apply_steer:
-          self.hca_frames_same_torque += self.CCP.STEER_STEP
-          if self.hca_frames_same_torque > 1.9 * DT_CTRL:
+          self.hca_frame_same_torque += self.CCP.STEER_STEP
+          if self.hca_frame_same_torque > 1.9 * DT_CTRL:
             apply_steer -= (1, -1)[apply_steer < 0]
-            self.hca_frames_same_torque = 0
+            self.hca_frame_same_torque = 0
         else:
-          self.hca_frames_same_torque = 0
+          self.hca_frame_same_torque = 0
         hca_enabled = abs(apply_steer) > 0
-        if self.eps_timer_workaround and self.hca_frames_timer_running >= 10 * DT_CTRL:  # FIXME: test, set back to 240
+        if self.eps_timer_workaround and self.hca_frame_timer_running >= 240 * DT_CTRL:
           if abs(apply_steer) <= self.CCP.STEER_MAX * 0.2:
-            self.hca_frames_low_torque += self.CCP.STEER_STEP
+            self.hca_frame_low_torque += self.CCP.STEER_STEP
           else:
-            self.hca_frames_low_torque = 0
-          if self.hca_frames_low_torque >= 0.5 * DT_CTRL:
-            hca_enabled = False
-            if self.hca_frames_low_torque >= 1.55 * DT_CTRL:
-              self.hca_frames_timer_running = 0
+            self.hca_frame_low_torque = 0
+          if self.hca_frame_low_torque >= 0.5 * DT_CTRL:
+            hca_enabled = False  #
       else:
-        self.hca_frames_timer_running = 0
-        self.hca_frames_low_torque = 0
+        self.hca_frame_low_torque = 0
         hca_enabled = False
         apply_steer = 0
+
+      if hca_enabled:
+        self.hca_frame_timer_resetting = 0
+      else:
+        self.hca_frame_timer_resetting += self.CCP.STEER_STEP
+        if self.hca_frame_timer_resetting >= 1.1 * DT_CTRL:
+          self.hca_frame_timer_running = 0
 
       can_sends.append(self.CCS.create_steering_control(self.packer_pt, CANBUS.pt, apply_steer, hca_enabled))
       self.apply_steer_last = apply_steer
