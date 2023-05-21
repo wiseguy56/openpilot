@@ -2,6 +2,8 @@ from cereal import car
 from selfdrive.car.volkswagen.values import CAR, BUTTON_STATES, CANBUS, NetworkLocation, TransmissionType, GearShifter
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint, get_safety_config
 from selfdrive.car.interfaces import CarInterfaceBase
+from selfdrive.config import Conversions as CV
+
 
 EventName = car.CarEvent.EventName
 
@@ -66,6 +68,11 @@ class CarInterface(CarInterfaceBase):
       ret.mass = 2011 + STD_CARGO_KG
       ret.wheelbase = 2.98
 
+    elif candidate == CAR.CRAFTER_MK2:
+      ret.mass = 2100 + STD_CARGO_KG
+      ret.wheelbase = 3.64  # SWB, LWB is 4.49, TBD how to detect difference
+      ret.minSteerSpeed = 50 * CV.KPH_TO_MS
+
     elif candidate == CAR.GOLF_MK7:
       ret.mass = 1397 + STD_CARGO_KG
       ret.wheelbase = 2.62
@@ -126,6 +133,10 @@ class CarInterface(CarInterfaceBase):
     elif candidate == CAR.SEAT_LEON_MK3:
       ret.mass = 1227 + STD_CARGO_KG
       ret.wheelbase = 2.64
+
+    elif candidate == CAR.SKODA_FABIA_MK4:
+      ret.mass = 1266 + STD_CARGO_KG
+      ret.wheelbase = 2.56
 
     elif candidate == CAR.SKODA_KAMIQ_MK1:
       ret.mass = 1265 + STD_CARGO_KG
