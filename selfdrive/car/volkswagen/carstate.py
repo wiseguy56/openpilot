@@ -14,6 +14,7 @@ class CarState(CarStateBase):
     self.button_states = {button.event_type: False for button in self.CCP.BUTTONS}
     self.esp_hold_confirmation = False
     self.upscale_lead_car_signal = False
+    self.acc_coasting_supported = False
 
   def create_button_events(self, pt_cp, buttons):
     button_events = []
@@ -110,6 +111,7 @@ class CarState(CarStateBase):
 
     # Update ACC radar status.
     self.acc_type = ext_cp.vl["ACC_06"]["ACC_Typ"]
+    self.acc_coasting_supported = bool(ext_cp.vl["ACC_06"]["ACC_Freilaufstrategie_TSK"])
     if pt_cp.vl["TSK_06"]["TSK_Status"] == 2:
       # ACC okay and enabled, but not currently engaged
       ret.cruiseState.available = True
@@ -493,6 +495,7 @@ class MqbExtraSignals:
   fwd_radar_signals = [
     ("ACC_Wunschgeschw_02", "ACC_02"),           # ACC set speed
     ("ACC_Typ", "ACC_06"),                       # Basic vs FtS vs SnG
+    ("ACC_Freilaufstrategie_TSK", "ACC_06"),     # Freewheeling (engine-off coasting) support
     ("AWV2_Freigabe", "ACC_10"),                 # FCW brake jerk release
     ("ANB_Teilbremsung_Freigabe", "ACC_10"),     # AEB partial braking release
     ("ANB_Zielbremsung_Freigabe", "ACC_10"),     # AEB target braking release

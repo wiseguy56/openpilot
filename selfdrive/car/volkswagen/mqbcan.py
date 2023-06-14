@@ -67,11 +67,13 @@ def acc_hud_status_value(main_switch_on, acc_faulted, long_active):
   return acc_control_value(main_switch_on, acc_faulted, long_active)
 
 
-def create_acc_accel_control(packer, bus, acc_type, acc_enabled, accel, acc_control, stopping, starting, esp_hold):
+def create_acc_accel_control(packer, bus, acc_type, acc_coasting_supported, acc_enabled, accel, acc_control, stopping,
+                             starting, esp_hold):
   commands = []
 
   acc_06_values = {
     "ACC_Typ": acc_type,
+    "ACC_Freilaufstrategie_TSK": acc_coasting_supported,
     "ACC_Status_ACC": acc_control,
     "ACC_StartStopp_Info": acc_enabled,
     "ACC_Sollbeschleunigung_02": accel if acc_enabled else 3.01,
