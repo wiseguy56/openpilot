@@ -15,7 +15,7 @@
 #include "selfdrive/ui/ui.h"
 
 
-const int ZOOM_UPDATE_TIMEOUT = 20;
+const int ZOOM_UPDATE_TIMEOUT 20;
 const int PAN_TIMEOUT = 100;
 const float MANEUVER_TRANSITION_THRESHOLD = 10;
 
