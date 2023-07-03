@@ -15,7 +15,6 @@
 #include "selfdrive/ui/ui.h"
 
 
-const int ZOOM_UPDATE_TIMEOUT 20;
 const int PAN_TIMEOUT = 100;
 const float MANEUVER_TRANSITION_THRESHOLD = 10;
 
@@ -195,7 +194,7 @@ void MapWindow::updateState(const UIState &s) {
 
   if (zoom_counter == 0) {
     m_map->setZoom(util::map_val<float>(velocity_filter.x(), 0, 30, MAX_ZOOM, MIN_ZOOM));
-    zoom_counter = ZOOM_UPDATE_TIMEOUT;
+    zoom_counter = -1;
   } else if (zoom_counter > 0) {
     zoom_counter--;
   }
