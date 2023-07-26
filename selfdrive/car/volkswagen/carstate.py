@@ -276,9 +276,9 @@ class CarState(CarStateBase):
       ("Comfort_Signal_Right", "Blinkmodi_02"),  # Right turn signal including comfort blink interval
       ("AB_Gurtschloss_FA", "Airbag_02"),        # Seatbelt status, driver
       ("AB_Gurtschloss_BF", "Airbag_02"),        # Seatbelt status, passenger
-      ("ESP_Fahrer_bremst", "ESP_05"),           # Driver applied brake pressure over threshold
+      #("ESP_Fahrer_bremst", "ESP_05"),           # Driver applied brake pressure over threshold
       ("MO_Fahrer_bremst", "Motor_14"),          # Brake pedal switch
-      ("ESP_Bremsdruck", "ESP_05"),              # Brake pressure
+      #("ESP_Bremsdruck", "ESP_05"),              # Brake pressure
       ("MO_Fahrpedalrohwert_01", "Motor_20"),    # Accelerator pedal value
       ("EPS_Lenkmoment", "LH_EPS_03"),           # Absolute driver torque input
       ("EPS_VZ_Lenkmoment", "LH_EPS_03"),        # Driver torque input sign
