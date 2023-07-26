@@ -260,12 +260,12 @@ class CarState(CarStateBase):
       ("LWI_VZ_Lenkradwinkel", "LWI_01"),        # Steering angle sign
       ("LWI_Lenkradw_Geschw", "LWI_01"),         # Absolute steering rate
       ("LWI_VZ_Lenkradw_Geschw", "LWI_01"),      # Steering rate sign
-      ("ESP_VL_Radgeschw_02", "ESP_19"),         # ABS wheel speed, front left
-      ("ESP_VR_Radgeschw_02", "ESP_19"),         # ABS wheel speed, front right
-      ("ESP_HL_Radgeschw_02", "ESP_19"),         # ABS wheel speed, rear left
-      ("ESP_HR_Radgeschw_02", "ESP_19"),         # ABS wheel speed, rear right
-      ("ESP_Gierrate", "ESP_02"),                # Absolute yaw rate
-      ("ESP_VZ_Gierrate", "ESP_02"),             # Yaw rate sign
+      ("WHEEL_SPEED_FL", "ESP_NEW_1"),           # ABS wheel speed, front left
+      ("WHEEL_SPEED_FR", "ESP_NEW_1"),           # ABS wheel speed, front right
+      ("WHEEL_SPEED_RL", "ESP_NEW_1"),           # ABS wheel speed, rear left
+      ("WHEEL_SPEED_RR", "ESP_NEW_1"),           # ABS wheel speed, rear right
+      ("YAW_RATE", "ESP_NEW_2"),                 # Absolute yaw rate
+      ("YAW_RATE_SIGN", "ESP_NEW_2"),            # Yaw rate sign
       ("ZV_FT_offen", "Gateway_72"),             # Door open, driver
       ("ZV_BT_offen", "Gateway_72"),             # Door open, passenger
       ("ZV_HFS_offen", "Gateway_72"),            # Door open, rear left
@@ -305,8 +305,8 @@ class CarState(CarStateBase):
       # sig_address, frequency
       ("LWI_01", 100),      # From J500 Steering Assist with integrated sensors
       ("LH_EPS_03", 100),   # From J500 Steering Assist with integrated sensors
-      ("ESP_19", 100),      # From J104 ABS/ESP controller
-      ("ESP_05", 50),       # From J104 ABS/ESP controller
+      ("ESP_NEW_1", 100),   # From J104 ABS/ESP controller
+      ("ESP_NEW_2", 50),    # From J104 ABS/ESP controller
       ("ESP_21", 50),       # From J104 ABS/ESP controller
       ("Motor_20", 50),     # From J623 Engine control module
       ("TSK_06", 50),       # From J623 Engine control module
