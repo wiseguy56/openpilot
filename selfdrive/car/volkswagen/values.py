@@ -146,12 +146,13 @@ class CAR:
 
 
 PQ_CARS = {CAR.PASSAT_NMS, CAR.SHARAN_MK2}
-
+MQBEVO_CARS = {CAR.GOLF_MK8}
 
 DBC: Dict[str, Dict[str, str]] = defaultdict(lambda: dbc_dict("vw_mqb_2010", None))
 for car_type in PQ_CARS:
   DBC[car_type] = dbc_dict("vw_golf_mk4", None)
-
+for car_type in MQBEVO_CARS:
+  DBC[car_type] = dbc_dict("vw_mqbevo", None)
 
 class Footnote(Enum):
   KAMIQ = CarFootnote(

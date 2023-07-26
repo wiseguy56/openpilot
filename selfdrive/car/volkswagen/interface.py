@@ -52,7 +52,7 @@ class CarInterface(CarInterfaceBase):
 
     else:
       # Set global MQB parameters
-      ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.volkswagen)]
+      ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.alloutput, safety_param=1)]
       ret.enableBsm = 0x30F in fingerprint[0]  # SWA_01
 
       if 0xAD in fingerprint[0] or docs:  # Getriebe_11
