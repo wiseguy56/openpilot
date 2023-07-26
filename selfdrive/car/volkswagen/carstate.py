@@ -60,26 +60,26 @@ class CarState(CarStateBase):
     ret.steerFaultTemporary = hca_status in ("INITIALIZING", "REJECTED")
 
     # Update gas, brakes, and gearshift.
-    ret.gas = pt_cp.vl["Motor_20"]["MO_Fahrpedalrohwert_01"] / 100.0
+    ret.gas = pt_cp.vl["MOTOR_NEW_1"]["ACCEL_PEDAL"] / 100.0
     ret.gasPressed = ret.gas > 0
-    #ret.brake = pt_cp.vl["ESP_05"]["ESP_Bremsdruck"] / 250.0  # FIXME: this is pressure in Bar, not sure what OP expects
+    ret.brake = pt_cp.vl["ESP_NEW_3"]["BRAKE_PRESSURE"]
     brake_pedal_pressed = bool(pt_cp.vl["Motor_14"]["MO_Fahrer_bremst"])
-    #brake_pressure_detected = bool(pt_cp.vl["ESP_05"]["ESP_Fahrer_bremst"])
+    #brake_pressure_detected = bool(pt_cp.vl["ESP_NEW_3"]["ESP_Fahrer_bremst"])
     #ret.brakePressed = brake_pedal_pressed or brake_pressure_detected
     ret.brakePressed = brake_pedal_pressed  # FIXME
     ret.parkingBrake = bool(pt_cp.vl["Kombi_01"]["KBI_Handbremse"])  # FIXME: need to include an EPB check as well
 
     # Update gear and/or clutch position data.
-    if trans_type == TransmissionType.automatic:
-      ret.gearShifter = self.parse_gear_shifter(self.CCP.shifter_values.get(pt_cp.vl["Getriebe_11"]["GE_Fahrstufe"], None))
-    elif trans_type == TransmissionType.direct:
-      ret.gearShifter = self.parse_gear_shifter(self.CCP.shifter_values.get(pt_cp.vl["EV_Gearshift"]["GearPosition"], None))
-    elif trans_type == TransmissionType.manual:
-      ret.clutchPressed = not pt_cp.vl["Motor_14"]["MO_Kuppl_schalter"]
-      if bool(pt_cp.vl["Gateway_72"]["BCM1_Rueckfahrlicht_Schalter"]):
-        ret.gearShifter = GearShifter.reverse
-      else:
-        ret.gearShifter = GearShifter.drive
+    #if trans_type == TransmissionType.automatic:
+    #  ret.gearShifter = self.parse_gear_shifter(self.CCP.shifter_values.get(pt_cp.vl["Getriebe_11"]["GE_Fahrstufe"], None))
+    #elif trans_type == TransmissionType.direct:
+    #  ret.gearShifter = self.parse_gear_shifter(self.CCP.shifter_values.get(pt_cp.vl["EV_Gearshift"]["GearPosition"], None))
+    #elif trans_type == TransmissionType.manual:
+    #  ret.clutchPressed = not pt_cp.vl["Motor_14"]["MO_Kuppl_schalter"]
+    #  if bool(pt_cp.vl["Gateway_72"]["BCM1_Rueckfahrlicht_Schalter"]):
+    #    ret.gearShifter = GearShifter.reverse
+    #  else:
+    #    ret.gearShifter = GearShifter.drive
 
     # Update door and trunk/hatch lid open status.
     ret.doorOpen = any([pt_cp.vl["Gateway_72"]["ZV_FT_offen"],
@@ -110,12 +110,12 @@ class CarState(CarStateBase):
     ret.stockAeb = bool(ext_cp.vl["ACC_10"]["ANB_Teilbremsung_Freigabe"]) or bool(ext_cp.vl["ACC_10"]["ANB_Zielbremsung_Freigabe"])
 
     # Update ACC radar status.
-    self.acc_type = ext_cp.vl["ACC_06"]["ACC_Typ"]
-    if pt_cp.vl["TSK_06"]["TSK_Status"] == 2:
+    #self.acc_type = ext_cp.vl["ACC_06"]["ACC_Typ"]
+    if pt_cp.vl["MOTOR_NEW_2"]["CRUISE_STATE"] == 1:
       # ACC okay and enabled, but not currently engaged
       ret.cruiseState.available = True
       ret.cruiseState.enabled = False
-    elif pt_cp.vl["TSK_06"]["TSK_Status"] in (3, 4, 5):
+    elif pt_cp.vl["MOTOR_NEW_2"]["CRUISE_STATE"] == 2:
       # ACC okay and enabled, currently regulating speed (3) or driver accel override (4) or brake only (5)
       ret.cruiseState.available = True
       ret.cruiseState.enabled = True
@@ -125,14 +125,14 @@ class CarState(CarStateBase):
       ret.cruiseState.enabled = False
     self.esp_hold_confirmation = bool(pt_cp.vl["ESP_21"]["ESP_Haltebestaetigung"])
     ret.cruiseState.standstill = self.CP.pcmCruise and self.esp_hold_confirmation
-    ret.accFaulted = pt_cp.vl["TSK_06"]["TSK_Status"] in (6, 7)
+    #ret.accFaulted = pt_cp.vl["TSK_06"]["TSK_Status"] in (6, 7)
 
     # Update ACC setpoint. When the setpoint is zero or there's an error, the
     # radar sends a set-speed of ~90.69 m/s / 203mph.
-    if self.CP.pcmCruise:
-      ret.cruiseState.speed = ext_cp.vl["ACC_02"]["ACC_Wunschgeschw_02"] * CV.KPH_TO_MS
-      if ret.cruiseState.speed > 90:
-        ret.cruiseState.speed = 0
+    #if self.CP.pcmCruise:
+    #  ret.cruiseState.speed = ext_cp.vl["ACC_02"]["ACC_Wunschgeschw_02"] * CV.KPH_TO_MS
+    #  if ret.cruiseState.speed > 90:
+    #    ret.cruiseState.speed = 0
 
     # Update button states for turn signals and ACC controls, capture all ACC button state/config for passthrough
     ret.leftBlinker = bool(pt_cp.vl["Blinkmodi_02"]["Comfort_Signal_Left"])
@@ -276,10 +276,10 @@ class CarState(CarStateBase):
       ("Comfort_Signal_Right", "Blinkmodi_02"),  # Right turn signal including comfort blink interval
       ("AB_Gurtschloss_FA", "Airbag_02"),        # Seatbelt status, driver
       ("AB_Gurtschloss_BF", "Airbag_02"),        # Seatbelt status, passenger
-      #("ESP_Fahrer_bremst", "ESP_05"),           # Driver applied brake pressure over threshold
+      #("ESP_Fahrer_bremst", "ESP_05"),           # FIXME: Driver applied brake pressure over threshold
       ("MO_Fahrer_bremst", "Motor_14"),          # Brake pedal switch
-      #("ESP_Bremsdruck", "ESP_05"),              # Brake pressure
-      ("MO_Fahrpedalrohwert_01", "Motor_20"),    # Accelerator pedal value
+      ("BRAKE_PRESSURE", "ESP_NEW_3"),           # Brake pressure
+      ("ACCEL_PEDAL", "MOTOR_NEW_1"),            # Accelerator pedal value
       ("EPS_Lenkmoment", "LH_EPS_03"),           # Absolute driver torque input
       ("EPS_VZ_Lenkmoment", "LH_EPS_03"),        # Driver torque input sign
       ("EPS_HCA_Status", "LH_EPS_03"),           # EPS HCA control status
@@ -287,7 +287,7 @@ class CarState(CarStateBase):
       ("ESP_Haltebestaetigung", "ESP_21"),       # ESP hold confirmation
       ("KBI_Handbremse", "Kombi_01"),            # Manual handbrake applied
       ("KBI_Variante", "Kombi_03"),              # Digital/full-screen instrument cluster installed
-      ("TSK_Status", "TSK_06"),                  # ACC engagement status from drivetrain coordinator
+      ("CRUISE_STATE", "MOTOR_NEW_2"),           # ACC engagement status from drivetrain coordinator
       ("GRA_Hauptschalter", "GRA_ACC_01"),       # ACC button, on/off
       ("GRA_Abbrechen", "GRA_ACC_01"),           # ACC button, cancel
       ("GRA_Tip_Setzen", "GRA_ACC_01"),          # ACC button, set
@@ -307,10 +307,11 @@ class CarState(CarStateBase):
       ("LWI_01", 100),      # From J500 Steering Assist with integrated sensors
       ("LH_EPS_03", 100),   # From J500 Steering Assist with integrated sensors
       ("ESP_NEW_1", 100),   # From J104 ABS/ESP controller
+      ("MOTOR_NEW_2", 100), # From J623 Engine control module
       ("ESP_NEW_2", 50),    # From J104 ABS/ESP controller
+      ("ESP_NEW_3", 50),    # From J105 ABS/ESP controller
       ("ESP_21", 50),       # From J104 ABS/ESP controller
-      ("Motor_20", 50),     # From J623 Engine control module
-      ("TSK_06", 50),       # From J623 Engine control module
+      ("MOTOR_NEW_1", 50),  # From J623 Engine control module
       ("ESP_02", 50),       # From J104 ABS/ESP controller
       ("GRA_ACC_01", 33),   # From J533 CAN gateway (via LIN from steering wheel controls)
       ("Gateway_72", 10),   # From J533 CAN gateway (aggregated data)
@@ -321,15 +322,15 @@ class CarState(CarStateBase):
       ("Kombi_03", 0),      # From J285 instrument cluster (not present on older cars, 1Hz when present)
     ]
 
-    if CP.transmissionType == TransmissionType.automatic:
-      signals.append(("GE_Fahrstufe", "Getriebe_11"))  # Auto trans gear selector position
-      checks.append(("Getriebe_11", 20))  # From J743 Auto transmission control module
-    elif CP.transmissionType == TransmissionType.direct:
-      signals.append(("GearPosition", "EV_Gearshift"))  # EV gear selector position
-      checks.append(("EV_Gearshift", 10))  # From J??? unknown EV control module
-    elif CP.transmissionType == TransmissionType.manual:
-      signals += [("MO_Kuppl_schalter", "Motor_14"),  # Clutch switch
-                  ("BCM1_Rueckfahrlicht_Schalter", "Gateway_72")]  # Reverse light from BCM
+    #if CP.transmissionType == TransmissionType.automatic:
+    #  signals.append(("GE_Fahrstufe", "Getriebe_11"))  # Auto trans gear selector position
+    #  checks.append(("Getriebe_11", 20))  # From J743 Auto transmission control module
+    #elif CP.transmissionType == TransmissionType.direct:
+    #  signals.append(("GearPosition", "EV_Gearshift"))  # EV gear selector position
+    #  checks.append(("EV_Gearshift", 10))  # From J??? unknown EV control module
+    #elif CP.transmissionType == TransmissionType.manual:
+    #  signals += [("MO_Kuppl_schalter", "Motor_14"),  # Clutch switch
+    #              ("BCM1_Rueckfahrlicht_Schalter", "Gateway_72")]  # Reverse light from BCM
 
     if CP.networkLocation == NetworkLocation.fwdCamera:
       # Radars are here on CANBUS.pt
