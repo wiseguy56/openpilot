@@ -117,6 +117,10 @@ class CarInterface(CarInterfaceBase):
       ret.mass = 1397 + STD_CARGO_KG
       ret.wheelbase = 2.62
 
+    elif candidate == CAR.GOLF_MK8:
+      ret.mass = 1409 + STD_CARGO_KG
+      ret.wheelbase = 2.63
+
     elif candidate == CAR.JETTA_MK7:
       ret.mass = 1328 + STD_CARGO_KG
       ret.wheelbase = 2.71

@@ -119,6 +119,7 @@ class CAR:
   ATLAS_MK1 = "VOLKSWAGEN ATLAS 1ST GEN"            # Chassis CA, Mk1 VW Atlas and Atlas Cross Sport
   CRAFTER_MK2 = "VOLKSWAGEN CRAFTER 2ND GEN"        # Chassis SY/SZ, Mk2 VW Crafter, VW Grand California, MAN TGE
   GOLF_MK7 = "VOLKSWAGEN GOLF 7TH GEN"              # Chassis 5G/AU/BA/BE, Mk7 VW Golf and variants
+  GOLF_MK8 = "VOLKSWAGEN GOLF 8TH GEN"              # Chassis CD, Mk8 Golf and variants
   JETTA_MK7 = "VOLKSWAGEN JETTA 7TH GEN"            # Chassis BU, Mk7 VW Jetta
   PASSAT_MK8 = "VOLKSWAGEN PASSAT 8TH GEN"          # Chassis 3G, Mk8 VW Passat and variants
   PASSAT_NMS = "VOLKSWAGEN PASSAT NMS"              # Chassis A3, North America/China/Mideast NMS Passat, incl. facelift
@@ -217,6 +218,9 @@ CAR_INFO: Dict[str, Union[VWCarInfo, List[VWCarInfo]]] = {
     VWCarInfo("Volkswagen Golf GTI 2015-21", auto_resume=False),
     VWCarInfo("Volkswagen Golf R 2015-19"),
     VWCarInfo("Volkswagen Golf SportsVan 2015-20"),
+  ],
+  CAR.GOLF_MK8: [
+    VWCarInfo("Volkswagen Golf GTI 2022-23"),
   ],
   CAR.JETTA_MK7: [
     VWCarInfo("Volkswagen Jetta 2018-22"),
@@ -593,6 +597,25 @@ FW_VERSIONS = {
       b'\xf1\x875Q0907572P \xf1\x890682',
       b'\xf1\x875Q0907572R \xf1\x890771',
       b'\xf1\x875Q0907572S \xf1\x890780',
+    ],
+  },
+  CAR.GOLF_MK8: {
+# FIXME: not responding to current VW query
+#    (Ecu.engine, 0x7e0, None): [
+#      b'',
+#    ],
+    (Ecu.transmission, 0x7e1, None): [
+      b'\xf1\x870GC906557AT\xf1\x894260',
+    ],
+    (Ecu.srs, 0x715, None): [
+      b'\xf1\x875WA959655M \xf1\x890636',
+    ],
+# FIXME: not responding to current VW query
+#    (Ecu.eps, 0x712, None): [
+#      b'',
+#    ],
+    (Ecu.fwdRadar, 0x757, None): [
+      b'\xf1\x875WA907572B \xf1\x890395',
     ],
   },
   CAR.JETTA_MK7: {
