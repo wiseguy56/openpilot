@@ -106,8 +106,8 @@ class CarControllerParams:
 
 
 class CANBUS:
-  pt = 0
-  cam = 2
+  pt = 4
+  cam = 6
 
 
 # Check the 7th and 8th characters of the VIN before adding a new CAR. If the
