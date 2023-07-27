@@ -3,7 +3,7 @@ from panda import Panda
 from common.conversions import Conversions as CV
 from selfdrive.car import STD_CARGO_KG, get_safety_config
 from selfdrive.car.interfaces import CarInterfaceBase
-from selfdrive.car.volkswagen.values import CAR, PQ_CARS, CANBUS, NetworkLocation, TransmissionType, GearShifter
+from selfdrive.car.volkswagen.values import CAR, MQBEVO_CARS, PQ_CARS, CanBus, NetworkLocation, TransmissionType, GearShifter
 
 ButtonType = car.CarState.ButtonEvent.Type
 EventName = car.CarEvent.EventName
@@ -14,10 +14,8 @@ class CarInterface(CarInterfaceBase):
     super().__init__(CP, CarController, CarState)
 
     if CP.networkLocation == NetworkLocation.fwdCamera:
-      self.ext_bus = CANBUS.pt
       self.cp_ext = self.cp
     else:
-      self.ext_bus = CANBUS.cam
       self.cp_ext = self.cp_cam
 
     self.eps_timer_soft_disable_alert = False
@@ -29,7 +27,7 @@ class CarInterface(CarInterfaceBase):
 
     if candidate in PQ_CARS:
       # Set global PQ35/PQ46/NMS parameters
-      ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.volkswagenPq)]
+      safety_config = [get_safety_config(car.CarParams.SafetyModel.volkswagenPq)]
       ret.enableBsm = 0x3BA in fingerprint[0]  # SWA_1
 
       if 0x440 in fingerprint[0] or docs:  # Getriebe_1
@@ -50,9 +48,21 @@ class CarInterface(CarInterfaceBase):
       # Panda ALLOW_DEBUG firmware required.
       ret.dashcamOnly = True
 
+    elif candidate in MQBEVO_CARS:
+      # Set global MQBevo parameters
+      safety_config = [get_safety_config(car.CarParams.SafetyModel.volkswagenMqbEvo)]
+      # TODO: locate BSM message
+      ret.enableBsm = False
+
+      # TODO: locate gear position message
+      ret.transmissionType = TransmissionType.automatic
+
+      # TODO: gateway harness not yet developed
+      ret.networkLocation = NetworkLocation.fwdCamera
+
     else:
       # Set global MQB parameters
-      ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.volkswagen)]
+      safety_config = [get_safety_config(car.CarParams.SafetyModel.volkswagen)]
       ret.enableBsm = 0x30F in fingerprint[0]  # SWA_01
 
       if 0xAD in fingerprint[0] or docs:  # Getriebe_11
@@ -67,6 +77,11 @@ class CarInterface(CarInterfaceBase):
       else:
         ret.networkLocation = NetworkLocation.fwdCamera
 
+    CAN = CanBus(fingerprint=fingerprint)
+    if CAN.gateway >= 4:
+      safety_config.insert(0, get_safety_config(car.CarParams.SafetyModel.noOutput))
+    ret.safetyConfigs = safety_config
+
     # Global lateral tuning defaults, can be overridden per-vehicle
 
     ret.steerActuatorDelay = 0.1
@@ -80,7 +95,8 @@ class CarInterface(CarInterfaceBase):
 
     # Global longitudinal tuning defaults, can be overridden per-vehicle
 
-    ret.experimentalLongitudinalAvailable = ret.networkLocation == NetworkLocation.gateway or docs
+    ret.experimentalLongitudinalAvailable = (ret.networkLocation == NetworkLocation.gateway or docs) and \
+                                             candidate not in MQBEVO_CARS
     if experimental_long:
       # Proof-of-concept, prep for E2E only. No radar points available. Panda ALLOW_DEBUG firmware required.
       ret.openpilotLongitudinalControl = True
@@ -116,6 +132,11 @@ class CarInterface(CarInterfaceBase):
     elif candidate == CAR.GOLF_MK7:
       ret.mass = 1397 + STD_CARGO_KG
       ret.wheelbase = 2.62
+
+    elif candidate == CAR.GOLF_MK8:
+      ret.mass = 1409 + STD_CARGO_KG
+      ret.wheelbase = 2.63
+      CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning)
 
     elif candidate == CAR.JETTA_MK7:
       ret.mass = 1328 + STD_CARGO_KG
@@ -253,5 +274,5 @@ class CarInterface(CarInterfaceBase):
     return ret
 
   def apply(self, c, now_nanos):
-    new_actuators, can_sends, self.eps_timer_soft_disable_alert = self.CC.update(c, self.CS, self.ext_bus, now_nanos)
+    new_actuators, can_sends, self.eps_timer_soft_disable_alert = self.CC.update(c, self.CS, now_nanos)
     return new_actuators, can_sends

@@ -5,7 +5,7 @@ from common.conversions import Conversions as CV
 from common.realtime import DT_CTRL
 from selfdrive.car import apply_driver_steer_torque_limits
 from selfdrive.car.volkswagen import mqbcan, pqcan
-from selfdrive.car.volkswagen.values import CANBUS, PQ_CARS, CarControllerParams
+from selfdrive.car.volkswagen.values import CanBus, PQ_CARS, CarControllerParams
 
 VisualAlert = car.CarControl.HUDControl.VisualAlert
 LongCtrlState = car.CarControl.Actuators.LongControlState
@@ -14,6 +14,7 @@ LongCtrlState = car.CarControl.Actuators.LongControlState
 class CarController:
   def __init__(self, dbc_name, CP, VM):
     self.CP = CP
+    self.CanBus = CanBus(CP)
     self.CCP = CarControllerParams(CP)
     self.CCS = pqcan if CP.carFingerprint in PQ_CARS else mqbcan
     self.packer_pt = CANPacker(dbc_name)
@@ -25,7 +26,7 @@ class CarController:
     self.hca_frame_timer_running = 0
     self.hca_frame_same_torque = 0
 
-  def update(self, CC, CS, ext_bus, now_nanos):
+  def update(self, CC, CS, now_nanos):
     actuators = CC.actuators
     hud_control = CC.hudControl
     can_sends = []
@@ -63,7 +64,7 @@ class CarController:
 
       self.eps_timer_soft_disable_alert = self.hca_frame_timer_running > self.CCP.STEER_TIME_ALERT / DT_CTRL
       self.apply_steer_last = apply_steer
-      can_sends.append(self.CCS.create_steering_control(self.packer_pt, CANBUS.pt, apply_steer, hca_enabled))
+      can_sends.append(self.CCS.create_steering_control(self.packer_pt, self.CanBus.gateway, apply_steer, hca_enabled))
 
     # **** Acceleration Controls ******************************************** #
 
@@ -72,7 +73,7 @@ class CarController:
       accel = clip(actuators.accel, self.CCP.ACCEL_MIN, self.CCP.ACCEL_MAX) if CC.longActive else 0
       stopping = actuators.longControlState == LongCtrlState.stopping
       starting = actuators.longControlState == LongCtrlState.starting
-      can_sends.extend(self.CCS.create_acc_accel_control(self.packer_pt, CANBUS.pt, CS.acc_type, CC.longActive, accel,
+      can_sends.extend(self.CCS.create_acc_accel_control(self.packer_pt, self.CanBus.gateway, CS.acc_type, CC.longActive, accel,
                                                          acc_control, stopping, starting, CS.esp_hold_confirmation))
 
     # **** HUD Controls ***************************************************** #
@@ -81,7 +82,7 @@ class CarController:
       hud_alert = 0
       if hud_control.visualAlert in (VisualAlert.steerRequired, VisualAlert.ldw):
         hud_alert = self.CCP.LDW_MESSAGES["laneAssistTakeOver"]
-      can_sends.append(self.CCS.create_lka_hud_control(self.packer_pt, CANBUS.pt, CS.ldw_stock_values, CC.enabled,
+      can_sends.append(self.CCS.create_lka_hud_control(self.packer_pt, self.CanBus.gateway, CS.ldw_stock_values, CC.enabled,
                                                        CS.out.steeringPressed, hud_alert, hud_control))
 
     if self.frame % self.CCP.ACC_HUD_STEP == 0 and self.CP.openpilotLongitudinalControl:
@@ -90,14 +91,14 @@ class CarController:
         lead_distance = 512 if CS.upscale_lead_car_signal else 8
       acc_hud_status = self.CCS.acc_hud_status_value(CS.out.cruiseState.available, CS.out.accFaulted, CC.longActive)
       set_speed = hud_control.setSpeed * CV.MS_TO_KPH  # FIXME: follow the recent displayed-speed updates, also use mph_kmh toggle to fix display rounding problem?
-      can_sends.append(self.CCS.create_acc_hud_control(self.packer_pt, CANBUS.pt, acc_hud_status, set_speed,
+      can_sends.append(self.CCS.create_acc_hud_control(self.packer_pt, self.CanBus.gateway, acc_hud_status, set_speed,
                                                        lead_distance))
 
     # **** Stock ACC Button Controls **************************************** #
 
     gra_send_ready = self.CP.pcmCruise and CS.gra_stock_values["COUNTER"] != self.gra_acc_counter_last
     if gra_send_ready and (CC.cruiseControl.cancel or CC.cruiseControl.resume):
-      can_sends.append(self.CCS.create_acc_buttons_control(self.packer_pt, ext_bus, CS.gra_stock_values,
+      can_sends.append(self.CCS.create_acc_buttons_control(self.packer_pt, self.CanBus.extended, CS.gra_stock_values,
                                                            cancel=CC.cruiseControl.cancel, resume=CC.cruiseControl.resume))
 
     new_actuators = actuators.copy()

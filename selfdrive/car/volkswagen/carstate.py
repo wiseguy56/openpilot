@@ -3,7 +3,7 @@ from cereal import car
 from common.conversions import Conversions as CV
 from selfdrive.car.interfaces import CarStateBase
 from opendbc.can.parser import CANParser
-from selfdrive.car.volkswagen.values import DBC, CANBUS, PQ_CARS, NetworkLocation, TransmissionType, GearShifter, \
+from selfdrive.car.volkswagen.values import DBC, CanBus, PQ_CARS, NetworkLocation, TransmissionType, GearShifter, \
                                             CarControllerParams
 
 
@@ -331,14 +331,13 @@ class CarState(CarStateBase):
                   ("BCM1_Rueckfahrlicht_Schalter", "Gateway_72")]  # Reverse light from BCM
 
     if CP.networkLocation == NetworkLocation.fwdCamera:
-      # Radars are here on CANBUS.pt
       signals += MqbExtraSignals.fwd_radar_signals
       checks += MqbExtraSignals.fwd_radar_checks
       if CP.enableBsm:
         signals += MqbExtraSignals.bsm_radar_signals
         checks += MqbExtraSignals.bsm_radar_checks
 
-    return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, CANBUS.pt)
+    return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, CanBus(CP).gateway)
 
   @staticmethod
   def get_cam_can_parser(CP):
@@ -362,14 +361,13 @@ class CarState(CarStateBase):
         ("LDW_02", 10)      # From R242 Driver assistance camera
       ]
     else:
-      # Radars are here on CANBUS.cam
       signals += MqbExtraSignals.fwd_radar_signals
       checks += MqbExtraSignals.fwd_radar_checks
       if CP.enableBsm:
         signals += MqbExtraSignals.bsm_radar_signals
         checks += MqbExtraSignals.bsm_radar_checks
 
-    return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, CANBUS.cam)
+    return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, CanBus(CP).camera)
 
   @staticmethod
   def get_can_parser_pq(CP):
@@ -448,14 +446,13 @@ class CarState(CarStateBase):
       checks += [("Motor_1", 100)]  # From J623 Engine control module
 
     if CP.networkLocation == NetworkLocation.fwdCamera:
-      # Extended CAN devices other than the camera are here on CANBUS.pt
       signals += PqExtraSignals.fwd_radar_signals
       checks += PqExtraSignals.fwd_radar_checks
       if CP.enableBsm:
         signals += PqExtraSignals.bsm_radar_signals
         checks += PqExtraSignals.bsm_radar_checks
 
-    return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, CANBUS.pt)
+    return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, CanBus(CP).gateway)
 
   @staticmethod
   def get_cam_can_parser_pq(CP):
@@ -478,14 +475,13 @@ class CarState(CarStateBase):
       ]
 
     if CP.networkLocation == NetworkLocation.gateway:
-      # Radars are here on CANBUS.cam
       signals += PqExtraSignals.fwd_radar_signals
       checks += PqExtraSignals.fwd_radar_checks
       if CP.enableBsm:
         signals += PqExtraSignals.bsm_radar_signals
         checks += PqExtraSignals.bsm_radar_checks
 
-    return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, CANBUS.cam)
+    return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, CanBus(CP).camera)
 
 
 class MqbExtraSignals:
