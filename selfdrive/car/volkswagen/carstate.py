@@ -55,9 +55,9 @@ class CarState(CarStateBase):
     ret.yawRate = pt_cp.vl["ESP_NEW_2"]["YAW_RATE"] * (1, -1)[int(pt_cp.vl["ESP_NEW_2"]["YAW_RATE_SIGN"])] * CV.DEG_TO_RAD
 
     # Verify EPS readiness to accept steering commands
-    hca_status = self.CCP.hca_status_values.get(pt_cp.vl["LH_EPS_03"]["EPS_HCA_Status"])
-    ret.steerFaultPermanent = hca_status in ("DISABLED", "FAULT")
-    ret.steerFaultTemporary = hca_status in ("INITIALIZING", "REJECTED")
+    #hca_status = self.CCP.hca_status_values.get(pt_cp.vl["LH_EPS_03"]["EPS_HCA_Status"])
+    #ret.steerFaultPermanent = hca_status in ("DISABLED", "FAULT")
+    #ret.steerFaultTemporary = hca_status in ("INITIALIZING", "REJECTED")
 
     # Update gas, brakes, and gearshift.
     ret.gas = pt_cp.vl["MOTOR_NEW_1"]["ACCEL_PEDAL"] / 100.0
