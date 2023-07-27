@@ -112,11 +112,11 @@ class CarState(CarStateBase):
 
     # Update ACC radar status.
     #self.acc_type = ext_cp.vl["ACC_06"]["ACC_Typ"]
-    if pt_cp.vl["MOTOR_NEW_1"]["TSK_STATE"] == 2:
+    if pt_cp.vl["MOTOR_NEW_1"]["TSK_STATUS"] == 2:
       # ACC okay and enabled, but not currently engaged
       ret.cruiseState.available = True
       ret.cruiseState.enabled = False
-    elif pt_cp.vl["MOTOR_NEW_1"]["TSK_STATE"] in (3, 4, 5):
+    elif pt_cp.vl["MOTOR_NEW_1"]["TSK_STATUS"] in (3, 4, 5):
       # ACC okay and enabled, currently regulating speed (3) or driver accel override (4) or brake only (5)
       ret.cruiseState.available = True
       ret.cruiseState.enabled = True
@@ -126,7 +126,7 @@ class CarState(CarStateBase):
       ret.cruiseState.enabled = False
     self.esp_hold_confirmation = bool(pt_cp.vl["ESP_21"]["ESP_Haltebestaetigung"])
     ret.cruiseState.standstill = self.CP.pcmCruise and self.esp_hold_confirmation
-    ret.accFaulted = pt_cp.vl["MOTOR_NEW_1"]["TSK_STATE"] in (6, 7)
+    ret.accFaulted = pt_cp.vl["MOTOR_NEW_1"]["TSK_STATUS"] in (6, 7)
 
     # Update ACC setpoint. When the setpoint is zero or there's an error, the
     # radar sends a set-speed of ~90.69 m/s / 203mph.
@@ -288,7 +288,7 @@ class CarState(CarStateBase):
       ("ESP_Haltebestaetigung", "ESP_21"),       # ESP hold confirmation
       ("KBI_Handbremse", "Kombi_01"),            # Manual handbrake applied
       ("KBI_Variante", "Kombi_03"),              # Digital/full-screen instrument cluster installed
-      ("TSK_STATE", "MOTOR_NEW_1"),           # ACC engagement status from drivetrain coordinator
+      ("TSK_STATUS", "MOTOR_NEW_1"),           # ACC engagement status from drivetrain coordinator
       ("GRA_Hauptschalter", "GRA_ACC_01"),       # ACC button, on/off
       ("GRA_Abbrechen", "GRA_ACC_01"),           # ACC button, cancel
       ("GRA_Tip_Setzen", "GRA_ACC_01"),          # ACC button, set
