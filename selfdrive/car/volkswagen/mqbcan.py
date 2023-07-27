@@ -2,6 +2,7 @@ def create_steering_control(packer, bus, apply_steer, lkas_enabled):
   values = {
     "ENABLED_1": 2 if lkas_enabled else 1,
     "ENABLED_2": 1 if lkas_enabled else 0,
+    "SET_ME_0X54": 0x54 if lkas_enabled else 0,
     "ASSIST_TORQUE": abs(apply_steer),
     "ASSIST_DIRECTION": 1 if apply_steer < 0 else 0,
   }
