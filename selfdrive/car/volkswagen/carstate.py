@@ -313,7 +313,6 @@ class CarState(CarStateBase):
       ("ESP_NEW_3", 50),    # From J105 ABS/ESP controller
       ("ESP_21", 50),       # From J104 ABS/ESP controller
       ("MOTOR_NEW_1", 50),  # From J623 Engine control module
-      ("ESP_02", 50),       # From J104 ABS/ESP controller
       ("GRA_ACC_01", 33),   # From J533 CAN gateway (via LIN from steering wheel controls)
       ("Gateway_72", 10),   # From J533 CAN gateway (aggregated data)
       ("Motor_14", 10),     # From J623 Engine control module
@@ -333,13 +332,13 @@ class CarState(CarStateBase):
     #  signals += [("MO_Kuppl_schalter", "Motor_14"),  # Clutch switch
     #              ("BCM1_Rueckfahrlicht_Schalter", "Gateway_72")]  # Reverse light from BCM
 
-    if CP.networkLocation == NetworkLocation.fwdCamera:
-      # Radars are here on CANBUS.pt
-      signals += MqbExtraSignals.fwd_radar_signals
-      checks += MqbExtraSignals.fwd_radar_checks
-      if CP.enableBsm:
-        signals += MqbExtraSignals.bsm_radar_signals
-        checks += MqbExtraSignals.bsm_radar_checks
+    #if CP.networkLocation == NetworkLocation.fwdCamera:
+    #  # Radars are here on CANBUS.pt
+    #  signals += MqbExtraSignals.fwd_radar_signals
+    #  checks += MqbExtraSignals.fwd_radar_checks
+    #  if CP.enableBsm:
+    #    signals += MqbExtraSignals.bsm_radar_signals
+    #    checks += MqbExtraSignals.bsm_radar_checks
 
     return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, CANBUS.pt)
 
