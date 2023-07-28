@@ -120,7 +120,6 @@ class CarInterface(CarInterfaceBase):
     elif candidate == CAR.GOLF_MK8:
       ret.mass = 1409 + STD_CARGO_KG
       ret.wheelbase = 2.63
-      CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning)
 
     elif candidate == CAR.JETTA_MK7:
       ret.mass = 1328 + STD_CARGO_KG
