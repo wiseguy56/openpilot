@@ -74,8 +74,8 @@ class CarControllerParams:
       self.ACC_HUD_STEP = 6               # ACC_02 message frequency 16Hz
       self.STEER_DRIVER_ALLOWANCE = 80    # Driver intervention threshold 0.8 Nm
       self.STEER_MAX = 512
-      self.STEER_DELTA_UP = 33
-      self.STEER_DELTA_DOWN = 33
+      self.STEER_DELTA_UP = 10
+      self.STEER_DELTA_DOWN = 10
 
       if CP.transmissionType == TransmissionType.automatic:
         self.shifter_values = can_define.dv["Getriebe_11"]["GE_Fahrstufe"]
