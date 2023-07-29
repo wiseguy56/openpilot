@@ -130,10 +130,10 @@ class CarState(CarStateBase):
 
     # Update ACC setpoint. When the setpoint is zero or there's an error, the
     # radar sends a set-speed of ~90.69 m/s / 203mph.
-    #if self.CP.pcmCruise:
-    #  ret.cruiseState.speed = ext_cp.vl["ACC_02"]["ACC_Wunschgeschw_02"] * CV.KPH_TO_MS
-    #  if ret.cruiseState.speed > 90:
-    #    ret.cruiseState.speed = 0
+    if self.CP.pcmCruise:
+      ret.cruiseState.speed = ext_cp.vl["ACC_NEW_2"]["SET_SPEED"] * CV.KPH_TO_MS
+      if ret.cruiseState.speed > 90:
+        ret.cruiseState.speed = 0
 
     # Update button states for turn signals and ACC controls, capture all ACC button state/config for passthrough
     ret.leftBlinker = bool(pt_cp.vl["Blinkmodi_02"]["Comfort_Signal_Left"])
@@ -288,7 +288,8 @@ class CarState(CarStateBase):
       ("ESP_Haltebestaetigung", "ESP_21"),       # ESP hold confirmation
       ("KBI_Handbremse", "Kombi_01"),            # Manual handbrake applied
       ("KBI_Variante", "Kombi_03"),              # Digital/full-screen instrument cluster installed
-      ("TSK_STATUS", "MOTOR_NEW_1"),           # ACC engagement status from drivetrain coordinator
+      ("TSK_STATUS", "MOTOR_NEW_1"),             # ACC engagement status from drivetrain coordinator
+      ("SET_SPEED", "ACC_NEW_2"),                # ACC set speed FIXME: move this to extra-radar-signals
       ("GRA_Hauptschalter", "GRA_ACC_01"),       # ACC button, on/off
       ("GRA_Abbrechen", "GRA_ACC_01"),           # ACC button, cancel
       ("GRA_Tip_Setzen", "GRA_ACC_01"),          # ACC button, set
@@ -313,6 +314,7 @@ class CarState(CarStateBase):
       ("ESP_21", 50),       # From J104 ABS/ESP controller
       ("MOTOR_NEW_1", 50),  # From J623 Engine control module
       ("GRA_ACC_01", 33),   # From J533 CAN gateway (via LIN from steering wheel controls)
+      ("ACC_NEW_2", 17),    # FIXME: move this to extra-radar-signals
       ("Gateway_72", 10),   # From J533 CAN gateway (aggregated data)
       ("Motor_14", 10),     # From J623 Engine control module
       ("Airbag_02", 5),     # From J234 Airbag control module
