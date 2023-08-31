@@ -69,7 +69,7 @@ class CarInterface(CarInterfaceBase):
 
     # Global lateral tuning defaults, can be overridden per-vehicle
 
-    ret.steerActuatorDelay = 0.2
+    ret.steerActuatorDelay = 0.12
     ret.steerLimitTimer = 0.8
     ret.steerRatio = 15.6  # Let the params learner figure this out
     ret.lateralTuning.pid.kpBP = [0.]
