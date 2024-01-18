@@ -7,6 +7,7 @@ import cereal.messaging as messaging
 from pathlib import Path
 from typing import Dict, Optional
 from setproctitle import setproctitle
+from cereal import car
 from cereal.messaging import PubMaster, SubMaster
 from cereal.visionipc import VisionIpcClient, VisionStreamType, VisionBuf
 from openpilot.common.swaglog import cloudlog
@@ -118,6 +119,9 @@ def main():
   setproctitle(PROCESS_NAME)
   config_realtime_process(7, 54)
 
+
+
+
   cl_context = CLContext()
   model = ModelState(cl_context)
   cloudlog.warning("models loaded, modeld starting")
@@ -151,6 +155,9 @@ def main():
 
   publish_state = PublishState()
   params = Params()
+  with car.CarParams.from_bytes(params.get("CarParams", block=True)) as msg:
+    steer_delay = msg.steerActuatorDelay + .2
+
 
   # setup filter to track dropped frames
   frame_dropped_filter = FirstOrderFilter(0., 10., 1. / ModelConstants.MODEL_FREQ)
@@ -207,7 +214,7 @@ def main():
     is_rhd = sm["driverMonitoringState"].isRHD
     frame_id = sm["roadCameraState"].frameId
     # TODO add lag
-    lateral_control_params = np.array([sm["carState"].vEgo, 0.1], dtype=np.float32)
+    lateral_control_params = np.array([sm["carState"].vEgo, steer_delay], dtype=np.float32)
     if sm.updated["liveCalibration"]:
       device_from_calib_euler = np.array(sm["liveCalibration"].rpyCalib, dtype=np.float32)
       model_transform_main = get_warp_matrix(device_from_calib_euler, main_wide_camera, False).astype(np.float32)
