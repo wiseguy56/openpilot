@@ -79,8 +79,10 @@ class CarController:
     if self.frame % self.CCP.ACC_CONTROL_STEP == 0 and self.CP.openpilotLongitudinalControl:
       acc_control = self.CCS.acc_control_value(CS.out.cruiseState.available, CS.out.accFaulted, CC.enabled, CC.longActive)
       accel = clip(actuators.accel, self.CCP.ACCEL_MIN, self.CCP.ACCEL_MAX) if CC.longActive else 0
-      stopping = actuators.longControlState == LongCtrlState.stopping
-      starting = actuators.longControlState == LongCtrlState.pid and (CS.esp_hold_confirmation or CS.out.vEgo < self.CP.vEgoStopping)
+      driver_gas_override = CC.enabled and CS.out.gasPressed
+      start_control_required = CS.esp_hold_confirmation or CS.out.vEgo < self.CP.vEgostopping
+      starting = (actuators.longControlState == LongCtrlState.pid or driver_gas_override) and start_control_required
+      stopping = actuators.longControlState == LongCtrlState.stopping and not starting
       can_sends.extend(self.CCS.create_acc_accel_control(self.packer_pt, CANBUS.pt, CS.acc_type, CC.enabled, accel,
                                                          acc_control, stopping, starting, CS.esp_hold_confirmation))
 
