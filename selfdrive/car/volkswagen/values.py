@@ -149,7 +149,7 @@ class CAR(StrEnum):
   SKODA_OCTAVIA_MK3 = "SKODA OCTAVIA 3RD GEN"       # Chassis NE, Mk3 Skoda Octavia and variants
 
 
-PQ_CARS = {CAR.PASSAT_NMS, CAR.SHARAN_MK2}
+PQ_CARS = {CAR.CADDY_MK3, CAR.PASSAT_NMS, CAR.SHARAN_MK2}
 
 
 DBC: Dict[str, Dict[str, str]] = defaultdict(lambda: dbc_dict("vw_mqb_2010", None))
