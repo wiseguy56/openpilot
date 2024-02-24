@@ -121,6 +121,7 @@ class VolkswagenFlags(IntFlag):
 class CAR(StrEnum):
   ARTEON_MK1 = "VOLKSWAGEN ARTEON 1ST GEN"          # Chassis AN, Mk1 VW Arteon and variants
   ATLAS_MK1 = "VOLKSWAGEN ATLAS 1ST GEN"            # Chassis CA, Mk1 VW Atlas and Atlas Cross Sport
+  CADDY_MK3 = "VOLKSWAGEN CADDY 3RD GEN"            # Chassis 2K, Mk3 VW Caddy and variants
   CRAFTER_MK2 = "VOLKSWAGEN CRAFTER 2ND GEN"        # Chassis SY/SZ, Mk2 VW Crafter, VW Grand California, MAN TGE
   GOLF_MK7 = "VOLKSWAGEN GOLF 7TH GEN"              # Chassis 5G/AU/BA/BE, Mk7 VW Golf and variants
   JETTA_MK7 = "VOLKSWAGEN JETTA 7TH GEN"            # Chassis BU, Mk7 VW Jetta
@@ -204,6 +205,9 @@ CAR_INFO: Dict[str, Union[VWCarInfo, List[VWCarInfo]]] = {
     VWCarInfo("Volkswagen Teramont 2018-22"),
     VWCarInfo("Volkswagen Teramont Cross Sport 2021-22"),
     VWCarInfo("Volkswagen Teramont X 2021-22"),
+  ],
+  CAR.CADDY_MK3: [
+    VWCarInfo("Volkswagen Caddy 2019"),
   ],
   CAR.CRAFTER_MK2: [
     VWCarInfo("Volkswagen Crafter 2017-23", video_link="https://youtu.be/4100gLeabmo"),

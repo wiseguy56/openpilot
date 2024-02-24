@@ -113,6 +113,11 @@ class CarInterface(CarInterfaceBase):
       ret.mass = 2011
       ret.wheelbase = 2.98
 
+    elif candidate == CAR.CADDY_MK3:
+      ret.mass = 1613
+      ret.wheelbase = 2.60
+      ret.minSteerSpeed = 50 * CV.KPH_TO_MS  # TBD, verify
+
     elif candidate == CAR.CRAFTER_MK2:
       ret.mass = 2100
       ret.wheelbase = 3.64  # SWB, LWB is 4.49, TBD how to detect difference
