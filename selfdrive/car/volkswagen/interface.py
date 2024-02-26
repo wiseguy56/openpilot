@@ -116,7 +116,7 @@ class CarInterface(CarInterfaceBase):
     elif candidate == CAR.CADDY_MK3:
       ret.mass = 1613
       ret.wheelbase = 2.60
-      #ret.minSteerSpeed = 50 * CV.KPH_TO_MS  # TBD, verify
+      ret.minSteerSpeed = 21 * CV.KPH_TO_MS
 
     elif candidate == CAR.CRAFTER_MK2:
       ret.mass = 2100
