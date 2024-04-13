@@ -5,7 +5,7 @@ from openpilot.common.numpy_fast import interp
 from openpilot.selfdrive.car.interfaces import LatControlInputs
 from openpilot.selfdrive.controls.lib.latcontrol import LatControl
 from openpilot.selfdrive.controls.lib.pid import PIDController
-#from openpilot.selfdrive.controls.lib.vehicle_model import ACCELERATION_DUE_TO_GRAVITY
+from openpilot.selfdrive.controls.lib.vehicle_model import ACCELERATION_DUE_TO_GRAVITY
 
 # At higher speeds (25+mph) we can assume:
 # Lateral acceleration achieved by a specific car correlates to
@@ -44,8 +44,7 @@ class LatControlTorque(LatControl):
       pid_log.active = False
     else:
       actual_curvature_vm = -VM.calc_curvature(math.radians(CS.steeringAngleDeg - params.angleOffsetDeg), CS.vEgo, params.roll)
-      #roll_compensation = params.roll * ACCELERATION_DUE_TO_GRAVITY
-      roll_compensation = 0.0
+      roll_compensation = params.roll * ACCELERATION_DUE_TO_GRAVITY
       if self.use_steering_angle:
         actual_curvature = actual_curvature_vm
         curvature_deadzone = abs(VM.calc_curvature(math.radians(self.steering_angle_deadzone_deg), CS.vEgo, 0.0))
@@ -63,13 +62,13 @@ class LatControlTorque(LatControl):
       low_speed_factor = interp(CS.vEgo, LOW_SPEED_X, LOW_SPEED_Y)**2
       setpoint = desired_lateral_accel + low_speed_factor * desired_curvature
       measurement = actual_lateral_accel + low_speed_factor * actual_curvature
-      gravity_adjusted_lateral_accel = desired_lateral_accel - roll_compensation
+      adjusted_lateral_accel = desired_lateral_accel - roll_compensation - float(self.torque_params.latAccelFactor)
       torque_from_setpoint = self.torque_from_lateral_accel(LatControlInputs(setpoint, roll_compensation, CS.vEgo, CS.aEgo), self.torque_params,
                                                             setpoint, lateral_accel_deadzone, friction_compensation=False, gravity_adjusted=False)
       torque_from_measurement = self.torque_from_lateral_accel(LatControlInputs(measurement, roll_compensation, CS.vEgo, CS.aEgo), self.torque_params,
                                                                measurement, lateral_accel_deadzone, friction_compensation=False, gravity_adjusted=False)
       pid_log.error = torque_from_setpoint - torque_from_measurement
-      ff = self.torque_from_lateral_accel(LatControlInputs(gravity_adjusted_lateral_accel, roll_compensation, CS.vEgo, CS.aEgo), self.torque_params,
+      ff = self.torque_from_lateral_accel(LatControlInputs(adjusted_lateral_accel, roll_compensation, CS.vEgo, CS.aEgo), self.torque_params,
                                           desired_lateral_accel - actual_lateral_accel, lateral_accel_deadzone, friction_compensation=True,
                                           gravity_adjusted=True)
 
