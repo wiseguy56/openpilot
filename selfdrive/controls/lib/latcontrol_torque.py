@@ -62,7 +62,7 @@ class LatControlTorque(LatControl):
       low_speed_factor = interp(CS.vEgo, LOW_SPEED_X, LOW_SPEED_Y)**2
       setpoint = desired_lateral_accel + low_speed_factor * desired_curvature
       measurement = actual_lateral_accel + low_speed_factor * actual_curvature
-      adjusted_lateral_accel = desired_lateral_accel - roll_compensation + float(self.torque_params.latAccelFactor)
+      adjusted_lateral_accel = desired_lateral_accel - roll_compensation - float(self.torque_params.latAccelOffset)
       torque_from_setpoint = self.torque_from_lateral_accel(LatControlInputs(setpoint, roll_compensation, CS.vEgo, CS.aEgo), self.torque_params,
                                                             setpoint, lateral_accel_deadzone, friction_compensation=False, gravity_adjusted=False)
       torque_from_measurement = self.torque_from_lateral_accel(LatControlInputs(measurement, roll_compensation, CS.vEgo, CS.aEgo), self.torque_params,
