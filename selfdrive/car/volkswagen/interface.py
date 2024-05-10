@@ -76,8 +76,8 @@ class CarInterface(CarInterfaceBase):
     else:
       # EPS assist map breakpoints at 0, 15, 50, 100, 250 km/h per Volkswagen SSP 399
       ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[0., 4.1, 13.9, 27.8, 69.4], [0.]]
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.05, 0.2, 0.2, 0.2, 0.2], [0.2]]
-      ret.lateralTuning.pid.kf = 0.00025
+      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.05, 0.1, 0.3, 0.3, 0.3], [0.1]]
+      ret.lateralTuning.pid.kf = 0.0002
 
     # Global longitudinal tuning defaults, can be overridden per-vehicle
 
