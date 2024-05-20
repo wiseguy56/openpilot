@@ -836,9 +836,9 @@ FW_VERSIONS = {
       b'\xf1\x878K5927156D \xf1\x890003',
     ],
     # FIXME: placeholder
-    (Ecu.srs, 0x715, None): [
-      b'PLACEHOLDER',
-    ],
+    #(Ecu.srs, 0x715, None): [
+    #  b'PLACEHOLDER',
+    #],
     (Ecu.eps, 0x712, None): [
       b'\xf1\x878K0909144J \xf1\x890509\xf1\x82\x01\n\x1a',
     ],
