@@ -65,9 +65,11 @@ class CarState(CarStateBase):
       ret.leftBlinker = bool(pt_cp.vl["Blinkmodi_01"]["BM_links"])
       ret.rightBlinker = bool(pt_cp.vl["Blinkmodi_01"]["BM_rechts"])
 
-      ret.cruiseState.available = pt_cp.vl["TSK_02"]["TSK_Status"] in (0, 1, 2)
-      ret.cruiseState.enabled = pt_cp.vl["TSK_02"]["TSK_Status"] in (1, 2)
-      ret.accFaulted = pt_cp.vl["TSK_02"]["TSK_Status"] == 3
+      # ACC okay but disabled (1), ACC ready (2), a radar visibility or other fault/disruption (6 or 7)
+      # currently regulating speed (3), driver accel override (4), brake only (5)
+      ret.cruiseState.available = pt_cp.vl["ACC_05"]["ACC_Status_ACC"] in (2, 3, 4, 5)
+      ret.cruiseState.enabled = pt_cp.vl["ACC_05"]["ACC_Status_ACC"] in (3, 4, 5)
+      ret.accFaulted = pt_cp.vl["ACC_05"]["ACC_Status_ACC"] in (6, 7)
 
       self.gra_stock_values = pt_cp.vl["LS_01"]
 
@@ -156,7 +158,8 @@ class CarState(CarStateBase):
     ret.parkingBrake = bool(pt_cp.vl["Kombi_01"]["KBI_Handbremse"])
 
     # Update seatbelt fastened status.
-    ret.seatbeltUnlatched = pt_cp.vl["Airbag_02"]["AB_Gurtschloss_FA"] != 3
+    # FIXME: disabled for Macan testing
+    #ret.seatbeltUnlatched = pt_cp.vl["Airbag_02"]["AB_Gurtschloss_FA"] != 3
 
     # Consume blind-spot monitoring info/warning LED states, if available.
     # Infostufe: BSM LED on, Warnung: BSM LED flashing
@@ -369,9 +372,12 @@ class CarState(CarStateBase):
       ("ESP_02", 50),       # From J104 ABS/ESP controller
       ("ESP_01", 33),       # From J104 ABS/ESP controller
       ("LS_01", 5),         # From J533 CAN gateway (via LIN from steering wheel controls)
-      ("TSK_02", 33),       # From J623 Engine control module
+      # FIXME: Testing using radar state instead of TSK state for Macan
+      #("TSK_02", 33),       # From J623 Engine control module
+      ("ACC_05", 50),       # Macan test: from radar
+      # FIXME: Macan gateway and airbag state on powertrain
+      #("Airbag_02", 5),     # From J234 Airbag control module
       #("Gateway_05", 10),   # From J533 CAN gateway (aggregated data)
-      ("Airbag_02", 5),     # From J234 Airbag control module
       ("Kombi_01", 2),      # From J285 Instrument cluster
       ("Blinkmodi_01", 0),  # From J519 BCM (sent at 1Hz when no lights active, 50Hz when active)
       ("Kombi_03", 0),      # From J285 instrument cluster (not present on older cars, 1Hz when present)
