@@ -69,15 +69,9 @@ class CarInterface(CarInterfaceBase):
 
     # Global lateral tuning defaults, can be overridden per-vehicle
 
-    ret.steerLimitTimer = 0.4
-    ret.steerActuatorDelay = 0.2
-    if ret.flags & VolkswagenFlags.PQ:
-      CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning)
-    else:
-      # EPS assist map breakpoints at 0, 15, 50, 100, 250 km/h per Volkswagen SSP 399
-      ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[0., 4.1, 13.9, 27.8, 69.4], [0.]]
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.05, 0.1, 0.4, 0.4, 0.4], [0.1]]
-      ret.lateralTuning.pid.kf = 0.0002
+    ret.steerLimitTimer = 1.0
+    ret.steerActuatorDelay = 0.1
+    CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning)
 
     # Global longitudinal tuning defaults, can be overridden per-vehicle
 
