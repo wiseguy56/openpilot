@@ -55,10 +55,8 @@ class CarInterface(CarInterfaceBase):
       # TODO: trans message/gear position ID
       ret.transmissionType = TransmissionType.automatic
 
-      if any(msg in fingerprint[1] for msg in (0x40, 0x86, 0x103)):  # Airbag_01, LWI_01, ESP_03
-        ret.networkLocation = NetworkLocation.gateway
-      else:
-        ret.networkLocation = NetworkLocation.fwdCamera
+      # TODO: network location detection, not working on Macan, possibly due to powertrain CAN bringup delay
+      ret.networkLocation = NetworkLocation.gateway
 
     else:
       # Set global MQB parameters
