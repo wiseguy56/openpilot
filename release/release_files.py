@@ -109,6 +109,7 @@ whitelist = [
   "opendbc/mazda_2017.dbc",
   "opendbc/nissan_x_trail_2017_generated.dbc",
   "opendbc/nissan_leaf_2018_generated.dbc",
+  "opendbc/rivian.dbc",
   "opendbc/subaru_global_2017_generated.dbc",
   "opendbc/subaru_global_2020_hybrid_generated.dbc",
   "opendbc/subaru_outback_2015_generated.dbc",

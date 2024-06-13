@@ -14,6 +14,7 @@ from openpilot.selfdrive.car.values import Platform
 from openpilot.selfdrive.car.volkswagen.values import CAR as VOLKSWAGEN
 from openpilot.selfdrive.car.tesla.values import CAR as TESLA
 from openpilot.selfdrive.car.body.values import CAR as COMMA
+from openpilot.selfdrive.car.rivian.values import CAR as RIVIAN
 
 # TODO: add routes for these cars
 non_tested_cars = [
@@ -25,6 +26,7 @@ non_tested_cars = [
   HONDA.HONDA_ODYSSEY_CHN,
   VOLKSWAGEN.VOLKSWAGEN_CRAFTER_MK2,  # need a route from an ACC-equipped Crafter
   SUBARU.SUBARU_FORESTER_HYBRID,
+  RIVIAN.R1S,
 ]
 
 
