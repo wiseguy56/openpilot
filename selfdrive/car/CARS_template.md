@@ -47,7 +47,7 @@ If your car has the following packages or features, then it's a good candidate f
 | Honda | Any car with Honda Sensing will work. Honda Sensing comes standard on many newer models. |
 | Subaru | Any car with EyeSight will work. EyeSight comes standard on many newer models. |
 | Nissan | Any car with ProPILOT will likely work. |
-| Toyota & Lexus | Any car that has Toyota/Lexus Safety Sense with "Lane Departure Alert with Steering Assist (LDA w/SA)" and/or "Lane Tracing Assist (LTA)" will work. Note that LDA without Steering Assist will not work. These features come standard on most newer models. |
+| Toyota & Lexus | Any car that has Toyota/Lexus Safety Sense with "Lane Departure Alert with Steering Assist (LDA w/SA)" and/or "Lane Tracing Assist (LTA)" will work. Note that LDA without Steering Assist will not work. These features come standard on most newer models. However, see [Toyota Security](#toyota-security) for support exceptions on the newest models. |
 | Hyundai, Kia, & Genesis | Any car with Smart Cruise Control (SCC) and Lane Following Assist (LFA) or Lane Keeping Assist (LKAS) will work. LKAS/LFA comes standard on most newer models. Any form of SCC will work, such as NSCC. |
 | Chrysler, Jeep, & Ram | Any car with LaneSense and Adaptive Cruise Control will likely work. These come standard on many newer models. |
 
