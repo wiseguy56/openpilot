@@ -49,7 +49,7 @@ class CarState(CarStateBase):
     ret.cruiseState.standstill = False  # This needs to be false, since we can resume from stop without sending anything special
 
     # Gear
-    ret.gearShifter = GEAR_MAP[self.can_define.dv["VDM_PropStatus"]["VDM_Prndl_Status"].get(int(cp.vl["VDM_PropStatus"]["VDM_Prndl_Status"]), "VDM_Prndl_Status_Not_Defined")]
+    ret.gearShifter = GEAR_MAP[self.can_define.dv["VDM_PropStatus"]["VDM_Prndl_Status"].get(int(cp.vl["VDM_PropStatus"]["VDM_Prndl_Status"]), "VDM_PRNDL_STATUS_NOT_DEFINED")]
 
     # Buttons
     button_events = []

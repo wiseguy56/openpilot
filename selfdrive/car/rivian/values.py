@@ -51,11 +51,11 @@ FW_QUERY_CONFIG = FwQueryConfig(
 )
 
 GEAR_MAP = {
-  "VDM_Prndl_Status_Not_Defined": car.CarState.GearShifter.unknown,
-  "VDM_Prndl_Status_Park": car.CarState.GearShifter.park,
-  "VDM_Prndl_Status_Reverse": car.CarState.GearShifter.reverse,
-  "VDM_Prndl_Status_Neutral": car.CarState.GearShifter.neutral,
-  "VDM_Prndl_Status_Drive": car.CarState.GearShifter.drive,
+  "VDM_PRNDL_STATUS_NOT_DEFINED": car.CarState.GearShifter.unknown,
+  "VDM_PRNDL_STATUS_PARK": car.CarState.GearShifter.park,
+  "VDM_PRNDL_STATUS_REVERSE": car.CarState.GearShifter.reverse,
+  "VDM_PRNDL_STATUS_NEUTRAL": car.CarState.GearShifter.neutral,
+  "VDM_PRNDL_STATUS_DRIVE": car.CarState.GearShifter.drive,
 }
 
 BUTTONS = [
