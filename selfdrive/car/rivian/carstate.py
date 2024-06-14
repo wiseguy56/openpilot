@@ -32,27 +32,20 @@ class CarState(CarStateBase):
 
     # Steering wheel
     epas_status = cp.vl["EPAS_AdasStatus"]
-    self.steer_warning = self.can_define.dv["EPAS_AdasStatus"]["EPAS_EacErrorCode"].get(int(epas_status["EPAS_EacErrorCode"]), None)
     ret.steeringAngleDeg = cp.vl["EPAS_AdasStatus"]["EPAS_InternalSas"]
     ret.steeringRateDeg = cp.vl["EPAS_AdasStatus"]["EPAS_SteeringAngleSpeed"]
     ret.steeringTorque = cp.vl["EPAS_SystemStatus"]["EPAS_TorsionBarTorque"]
 
     ret.steeringPressed = cp.vl["EPAS_SystemStatus"]["EPAS_HandsOnLevel"] > 0
     eac_status = self.can_define.dv["EPAS_AdasStatus"]["EPAS_EacStatus"].get(int(epas_status["EPAS_EacStatus"]),None)
-    ret.steerFaultPermanent = eac_status in ["EAC_FAULT"]
-    ret.steerFaultTemporary = self.steer_warning not in ["EAC_ERROR_IDLE", "EAC_ERROR_HANDS_ON"] and eac_status not in ["EAC_ACTIVE", "EAC_AVAILABLE"]
+    ret.steerFaultPermanent = eac_status in ["EPAS_EacStatus_Eac_Fault"]
+    eac_error = self.can_define.dv["EPAS_AdasStatus"]["EPAS_EacErrorCode"].get(int(epas_status["EPAS_EacErrorCode"]), None)
+    ret.steerFaultTemporary = eac_error not in ["EPAS_No_Err"]
 
     # Cruise state
-    cruise_state = self.can_define.dv["DI_state"]["DI_cruiseState"].get(int(cp.vl["DI_state"]["DI_cruiseState"]), None)
-    speed_units = self.can_define.dv["DI_state"]["DI_speedUnits"].get(int(cp.vl["DI_state"]["DI_speedUnits"]), None)
-
-    self.acc_enabled = (cruise_state in ("ENABLED", "STANDSTILL", "OVERRIDE", "PRE_FAULT", "PRE_CANCEL"))
-    ret.cruiseState.enabled = self.acc_enabled
-    if speed_units == "KPH":
-      ret.cruiseState.speed = cp.vl["DI_state"]["DI_digitalSpeed"] * CV.KPH_TO_MS
-    elif speed_units == "MPH":
-      ret.cruiseState.speed = cp.vl["DI_state"]["DI_digitalSpeed"] * CV.MPH_TO_MS
-    ret.cruiseState.available = ((cruise_state == "STANDBY") or ret.cruiseState.enabled)
+    ret.cruiseState.enabled = cp_cam.vl["VDM_AdasSts"]["VDM_AdasInterfaceStatus"] == 1
+    ret.cruiseState.speed = cp.vl["DI_state"]["DI_digitalSpeed"] * CV.MPH_TO_MS
+    ret.cruiseState.available = cp_cam.vl["VDM_AdasSts"]["VDM_AdasInterfaceStatus"] == 1
     ret.cruiseState.standstill = False  # This needs to be false, since we can resume from stop without sending anything special
 
     # Gear
@@ -85,7 +78,7 @@ class CarState(CarStateBase):
     ret.rightBlindspot = False
 
     # AEB
-    ret.stockAeb = cp_cam.vl["ESP_AebFb"]["ESP_AebActive"] == 1
+    ret.stockAeb = cp_cam.vl["ACM_AebRequest"]["ACM_EnableRequest"] == 1
 
     # Messages needed by carcontroller
     self.acc_enabled = copy.copy(cp_cam.vl["ACM_longitudinalRequest"]["ACM_longInterfaceEnable"])
@@ -103,7 +96,6 @@ class CarState(CarStateBase):
       ("EPAS_AdasStatus", 100),
       ("EPAS_SystemStatus", 100),
       ("RCM_Status", 8),
-      ("ESP_AebFb", 100)
     ]
 
     return CANParser(DBC[CP.carFingerprint]["pt"], messages, 0)
@@ -112,6 +104,8 @@ class CarState(CarStateBase):
   def get_cam_can_parser(CP):
     messages = [
       ("ACM_longitudinalRequest", 100),
+      ("VDM_AdasSts", 100),
+      ("ACM_AebRequest", 100)
     ]
 
     return CANParser(DBC[CP.carFingerprint]["pt"], messages, 2)

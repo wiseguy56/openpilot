@@ -13,7 +13,7 @@ class CarInterface(CarInterfaceBase):
     # There is no safe way to do steer blending with user torque,
     # so the steering behaves like autopilot. This is not
     # how openpilot should be, hence dashcamOnly
-    ret.dashcamOnly = False
+    ret.dashcamOnly = True
 
     ret.steerControlType = car.CarParams.SteerControlType.angle
 
@@ -25,9 +25,8 @@ class CarInterface(CarInterfaceBase):
     ret.longitudinalActuatorDelayUpperBound = 0.5 # s
     ret.radarTimeStep = (1.0 / 8) # 8Hz
 
-    flags = Panda.FLAG_RIVIAN_R1S
-    ret.openpilotLongitudinalControl = False
-    ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.rivian, flags)]
+    ret.openpilotLongitudinalControl = True
+    ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.rivian, Panda.FLAG_RIVIAN_LONG_CONTROL)]
 
     ret.steerLimitTimer = 1.0
     ret.steerActuatorDelay = 0.25
