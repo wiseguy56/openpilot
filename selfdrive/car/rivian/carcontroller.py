@@ -29,11 +29,9 @@ class CarController(CarControllerBase):
     self.apply_angle_last = apply_angle
     can_sends.append(riviancan.create_steering_control(self.packer, self.frame, apply_angle, CC.latActive))
 
-
     # Longitudinal control
     if self.CP.openpilotLongitudinalControl:
       can_sends.append(riviancan.create_longitudinal_commands(self.packer, self.frame, actuators.accel, CS.acc_enabled))
-
 
     new_actuators = actuators.copy()
     new_actuators.steeringAngleDeg = self.apply_angle_last

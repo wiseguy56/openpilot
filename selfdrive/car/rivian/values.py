@@ -12,7 +12,7 @@ Button = namedtuple('Button', ['event_type', 'can_addr', 'can_msg', 'values'])
 class CAR(Platforms):
   RIVIAN_R1S = PlatformConfig(
     [CarDocs("Rivian R1S", "All")],
-    CarSpecs(mass=1899., wheelbase=2.875, steerRatio=12.0),
+    CarSpecs(mass=3206., wheelbase=3.076, steerRatio=12.0),
     dbc_dict('rivian_can', None)
   )
 
