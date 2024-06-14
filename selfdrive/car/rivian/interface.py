@@ -25,8 +25,10 @@ class CarInterface(CarInterfaceBase):
     ret.longitudinalActuatorDelay = 0.5 # s
     ret.radarTimeStep = (1.0 / 8) # 8Hz
 
-    ret.openpilotLongitudinalControl = True
-    ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.rivian, Panda.FLAG_RIVIAN_LONG_CONTROL)]
+    ret.openpilotLongitudinalControl = False
+    flag = 0
+    #flag |= Panda.FLAG_RIVIAN_LONG_CONTROL
+    ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.rivian, flag)]
 
     ret.steerLimitTimer = 1.0
     ret.steerActuatorDelay = 0.25

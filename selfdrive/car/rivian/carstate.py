@@ -83,7 +83,6 @@ class CarState(CarStateBase):
     # Messages needed by carcontroller
     self.acc_enabled = copy.copy(cp_cam.vl["ACM_longitudinalRequest"]["ACM_longInterfaceEnable"])
 
-
     return ret
 
   @staticmethod
