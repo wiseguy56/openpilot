@@ -1,20 +1,34 @@
 from collections import namedtuple
+from dataclasses import dataclass, field
 
 from cereal import car
-from openpilot.selfdrive.car import AngleRateLimit, CarSpecs, PlatformConfig, Platforms, dbc_dict
-from openpilot.selfdrive.car.docs_definitions import CarDocs
+from openpilot.selfdrive.car import AngleRateLimit
+from openpilot.selfdrive.car import CarSpecs, DbcDict, PlatformConfig, Platforms, dbc_dict
+from openpilot.selfdrive.car.docs_definitions import CarHarness, CarDocs, CarParts
 from openpilot.selfdrive.car.fw_query_definitions import FwQueryConfig, Request, StdQueries
 
 Ecu = car.CarParams.Ecu
 
 Button = namedtuple('Button', ['event_type', 'can_addr', 'can_msg', 'values'])
 
+
+@dataclass
+class RivianCarDocs(CarDocs):
+  package: str = "All"
+  car_parts: CarParts = field(default_factory=CarParts.common([CarHarness.mazda]))
+
+
+@dataclass
+class RivianPlatformConfig(PlatformConfig):
+  dbc_dict: DbcDict = field(default_factory=lambda: dbc_dict('rivian_can', None))
+
+
 class CAR(Platforms):
-  RIVIAN_R1S = PlatformConfig(
-    [CarDocs("RIVIAN R1S", "All")],
+  RIVIAN_R1S = RivianPlatformConfig(
+    [RivianCarDocs("Rivian R1S 2022")],
     CarSpecs(mass=3206., wheelbase=3.076, steerRatio=12.0),
-    dbc_dict('rivian_can', None)
   )
+
 
 FW_QUERY_CONFIG = FwQueryConfig(
   requests=[
