@@ -12,6 +12,7 @@ from openpilot.selfdrive.car.subaru.values import CAR as SUBARU
 from openpilot.selfdrive.car.tesla.values import CAR as TESLA
 from openpilot.selfdrive.car.toyota.values import CAR as TOYOTA
 from openpilot.selfdrive.car.volkswagen.values import CAR as VW
+from openpilot.selfdrive.car.rivian.values import CAR as RIVIAN
 
 FW_VERSIONS = get_interface_attr('FW_VERSIONS', combine_brands=True, ignore_none=True)
 _FINGERPRINTS = get_interface_attr('FINGERPRINTS', combine_brands=True, ignore_none=True)
@@ -260,6 +261,7 @@ MIGRATION = {
   "NISSAN LEAF 2018 Instrument Cluster": NISSAN.NISSAN_LEAF_IC,
   "NISSAN ROGUE 2019": NISSAN.NISSAN_ROGUE,
   "NISSAN ALTIMA 2020": NISSAN.NISSAN_ALTIMA,
+  "RIVIAN R1S": RIVIAN.RIVIAN_R1S,
   "SUBARU ASCENT LIMITED 2019": SUBARU.SUBARU_ASCENT,
   "SUBARU OUTBACK 6TH GEN": SUBARU.SUBARU_OUTBACK,
   "SUBARU LEGACY 7TH GEN": SUBARU.SUBARU_LEGACY,
