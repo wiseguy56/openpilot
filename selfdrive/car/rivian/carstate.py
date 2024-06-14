@@ -53,14 +53,14 @@ class CarState(CarStateBase):
 
     # Buttons
     button_events = []
-    for button in BUTTONS:
-      state = (cp.vl[button.can_addr][button.can_msg] in button.values)
-      if self.button_states[button.event_type] != state:
-        event = car.CarState.ButtonEvent.new_message()
-        event.type = button.event_type
-        event.pressed = state
-        button_events.append(event)
-      self.button_states[button.event_type] = state
+    # for button in BUTTONS:
+    #   state = (cp.vl[button.can_addr][button.can_msg] in button.values)
+    #   if self.button_states[button.event_type] != state:
+    #     event = car.CarState.ButtonEvent.new_message()
+    #     event.type = button.event_type
+    #     event.pressed = state
+    #     button_events.append(event)
+    #   self.button_states[button.event_type] = state
     ret.buttonEvents = button_events
 
     # Doors
