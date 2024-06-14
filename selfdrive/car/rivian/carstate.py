@@ -44,7 +44,7 @@ class CarState(CarStateBase):
 
     # Cruise state
     ret.cruiseState.enabled = cp_cam.vl["VDM_AdasSts"]["VDM_AdasInterfaceStatus"] == 1
-    ret.cruiseState.speed = cp.vl["DI_state"]["DI_digitalSpeed"] * CV.MPH_TO_MS
+    ret.cruiseState.speed = cp.vl["ESPiB1"]["ESPiB1_VehicleSpeed"] # todo
     ret.cruiseState.available = cp_cam.vl["VDM_AdasSts"]["VDM_AdasInterfaceStatus"] == 1
     ret.cruiseState.standstill = False  # This needs to be false, since we can resume from stop without sending anything special
 
