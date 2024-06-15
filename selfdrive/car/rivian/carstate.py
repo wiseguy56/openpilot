@@ -31,15 +31,14 @@ class CarState(CarStateBase):
     ret.brakePressed = cp.vl["iBESP2"]["iBESP2_BrakePedalApplied"] == 1
 
     # Steering wheel
-    epas_status = cp.vl["EPAS_AdasStatus"]
     ret.steeringAngleDeg = cp.vl["EPAS_AdasStatus"]["EPAS_InternalSas"]
     ret.steeringRateDeg = cp.vl["EPAS_AdasStatus"]["EPAS_SteeringAngleSpeed"]
     ret.steeringTorque = cp.vl["EPAS_SystemStatus"]["EPAS_TorsionBarTorque"]
+    ret.steeringPressed = abs(ret.steeringTorque) > 1.0
 
-    ret.steeringPressed = cp.vl["EPAS_SystemStatus"]["EPAS_HandsOnLevel"] > 0
-    eac_status = self.can_define.dv["EPAS_AdasStatus"]["EPAS_EacStatus"].get(int(epas_status["EPAS_EacStatus"]),None)
+    eac_status = self.can_define.dv["EPAS_AdasStatus"]["EPAS_EacStatus"].get(int(cp.vl["EPAS_AdasStatus"]["EPAS_EacStatus"]),None)
     ret.steerFaultPermanent = eac_status in ["EPAS_EacStatus_Eac_Fault"]
-    eac_error = self.can_define.dv["EPAS_AdasStatus"]["EPAS_EacErrorCode"].get(int(epas_status["EPAS_EacErrorCode"]), None)
+    eac_error = self.can_define.dv["EPAS_AdasStatus"]["EPAS_EacErrorCode"].get(int(cp.vl["EPAS_AdasStatus"]["EPAS_EacErrorCode"]), None)
     ret.steerFaultTemporary = eac_error not in ["EPAS_No_Err"]
 
     # Cruise state
