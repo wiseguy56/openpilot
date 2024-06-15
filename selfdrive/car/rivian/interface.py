@@ -16,6 +16,7 @@ class CarInterface(CarInterfaceBase):
     ret.dashcamOnly = False
 
     ret.steerControlType = car.CarParams.SteerControlType.angle
+    ret.radarUnavailable = True
 
     # Set kP and kI to 0 over the whole speed range to have the planner accel as actuator command
     ret.longitudinalTuning.kpBP = [0]
@@ -23,11 +24,10 @@ class CarInterface(CarInterfaceBase):
     ret.longitudinalTuning.kiBP = [0]
     ret.longitudinalTuning.kiV = [0]
     ret.longitudinalActuatorDelay = 0.5 # s
-    ret.radarTimeStep = (1.0 / 8) # 8Hz
 
-    ret.openpilotLongitudinalControl = False
+    ret.openpilotLongitudinalControl = True
     flag = 0
-    #flag |= Panda.FLAG_RIVIAN_LONG_CONTROL
+    flag |= Panda.FLAG_RIVIAN_LONG_CONTROL
     ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.rivian, flag)]
 
     ret.steerLimitTimer = 1.0
