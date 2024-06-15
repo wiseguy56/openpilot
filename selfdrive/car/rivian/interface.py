@@ -17,13 +17,7 @@ class CarInterface(CarInterfaceBase):
 
     ret.steerControlType = car.CarParams.SteerControlType.angle
     ret.radarUnavailable = True
-
-    # Set kP and kI to 0 over the whole speed range to have the planner accel as actuator command
-    ret.longitudinalTuning.kpBP = [0]
-    ret.longitudinalTuning.kpV = [0]
-    ret.longitudinalTuning.kiBP = [0]
-    ret.longitudinalTuning.kiV = [0]
-    ret.longitudinalActuatorDelay = 0.5 # s
+    ret.longitudinalActuatorDelay = 0.5
 
     ret.openpilotLongitudinalControl = True
     flag = 0
