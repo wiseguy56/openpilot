@@ -11,41 +11,19 @@ Ecu = car.CarParams.Ecu
 
 Button = namedtuple('Button', ['event_type', 'can_addr', 'can_msg', 'values'])
 
-
-@dataclass
-class RivianCarDocs(CarDocs):
-  package: str = "All"
-  car_parts: CarParts = field(default_factory=CarParts.common([CarHarness.mazda]))
-
-
-@dataclass
-class RivianPlatformConfig(PlatformConfig):
-  dbc_dict: DbcDict = field(default_factory=lambda: dbc_dict('rivian_can', None))
-
-
 class CAR(Platforms):
-  RIVIAN_R1S = RivianPlatformConfig(
-    [RivianCarDocs("Rivian R1S 2022")],
-    CarSpecs(mass=3206., wheelbase=3.076, steerRatio=12.0),
+  RIVIAN_R1S = PlatformConfig(
+    [CarDocs("Rivian R1S", "All")],
+    CarSpecs(mass=3206., wheelbase=3.08, steerRatio=15.0),
+    dbc_dict('rivian_can', None)
   )
-
 
 FW_QUERY_CONFIG = FwQueryConfig(
   requests=[
     Request(
       [StdQueries.TESTER_PRESENT_REQUEST, StdQueries.SUPPLIER_SOFTWARE_VERSION_REQUEST],
       [StdQueries.TESTER_PRESENT_RESPONSE, StdQueries.SUPPLIER_SOFTWARE_VERSION_RESPONSE],
-      whitelist_ecus=[Ecu.eps],
-      rx_offset=0x08,
       bus=0,
-    ),
-    Request(
-      [StdQueries.TESTER_PRESENT_REQUEST, StdQueries.UDS_VERSION_REQUEST],
-      [StdQueries.TESTER_PRESENT_RESPONSE, StdQueries.UDS_VERSION_RESPONSE],
-      whitelist_ecus=[Ecu.engine],
-      rx_offset=0x10,
-      bus=1,
-      obd_multiplexing=False,
     ),
   ]
 )

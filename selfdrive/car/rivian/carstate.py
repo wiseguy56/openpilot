@@ -43,9 +43,9 @@ class CarState(CarStateBase):
     ret.steerFaultTemporary = eac_error not in ["EPAS_No_Err"]
 
     # Cruise state
-    ret.cruiseState.enabled = cp_cam.vl["VDM_AdasSts"]["VDM_AdasDriverModeStatus"] == 1
+    ret.cruiseState.enabled = cp.vl["VDM_AdasSts"]["VDM_AdasDriverModeStatus"] == 1
     ret.cruiseState.speed = cp.vl["ESPiB1"]["ESPiB1_VehicleSpeed"] # todo
-    ret.cruiseState.available = cp_cam.vl["VDM_AdasSts"]["VDM_AdasInterfaceStatus"] == 1
+    ret.cruiseState.available = cp.vl["VDM_AdasSts"]["VDM_AdasInterfaceStatus"] == 1
     ret.cruiseState.standstill = False  # This needs to be false, since we can resume from stop without sending anything special
 
     # Gear
@@ -95,6 +95,7 @@ class CarState(CarStateBase):
       ("EPAS_AdasStatus", 100),
       ("EPAS_SystemStatus", 100),
       ("RCM_Status", 8),
+      ("VDM_AdasSts", 100),
     ]
 
     return CANParser(DBC[CP.carFingerprint]["pt"], messages, 0)
@@ -103,7 +104,6 @@ class CarState(CarStateBase):
   def get_cam_can_parser(CP):
     messages = [
       ("ACM_longitudinalRequest", 100),
-      ("VDM_AdasSts", 100),
       ("ACM_AebRequest", 100)
     ]
 
