@@ -286,5 +286,6 @@ def main() -> NoReturn:
     if sm.frame % 5 == 0:
       calibrator.send_data(pm, sm.all_checks())
 
+
 if __name__ == "__main__":
   main()
